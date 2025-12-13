@@ -11,7 +11,7 @@ import (
 func TestClientCall(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req Request
-		json.NewDecoder(r.Body).Decode(&req)
+		_ = json.NewDecoder(r.Body).Decode(&req)
 
 		resp := Response{
 			JSONRPC: "2.0",
@@ -20,7 +20,7 @@ func TestClientCall(t *testing.T) {
 		resp.Result, _ = json.Marshal("0x123")
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -42,7 +42,7 @@ func TestClientCall(t *testing.T) {
 	}
 
 	var result string
-	json.Unmarshal(resp.Result, &result)
+	_ = json.Unmarshal(resp.Result, &result)
 	if result != "0x123" {
 		t.Errorf("Expected result 0x123, got %s", result)
 	}
@@ -51,7 +51,7 @@ func TestClientCall(t *testing.T) {
 func TestClientCallRaw(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"jsonrpc":"2.0","result":"0x456","id":1}`))
+		_, _ = w.Write([]byte(`{"jsonrpc":"2.0","result":"0x456","id":1}`))
 	}))
 	defer server.Close()
 
@@ -64,10 +64,10 @@ func TestClientCallRaw(t *testing.T) {
 	}
 
 	var response Response
-	json.Unmarshal(resp, &response)
+	_ = json.Unmarshal(resp, &response)
 
 	var result string
-	json.Unmarshal(response.Result, &result)
+	_ = json.Unmarshal(response.Result, &result)
 	if result != "0x456" {
 		t.Errorf("Expected result 0x456, got %s", result)
 	}
@@ -76,7 +76,7 @@ func TestClientCallRaw(t *testing.T) {
 func TestClientGetBlockNumber(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req Request
-		json.NewDecoder(r.Body).Decode(&req)
+		_ = json.NewDecoder(r.Body).Decode(&req)
 
 		if req.Method != "eth_blockNumber" {
 			t.Errorf("Expected method eth_blockNumber, got %s", req.Method)
@@ -89,7 +89,7 @@ func TestClientGetBlockNumber(t *testing.T) {
 		resp.Result, _ = json.Marshal("0x789abc")
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -107,7 +107,7 @@ func TestClientGetBlockNumber(t *testing.T) {
 func TestClientGetFullBlock(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req Request
-		json.NewDecoder(r.Body).Decode(&req)
+		_ = json.NewDecoder(r.Body).Decode(&req)
 
 		if req.Method != "eth_getBlockByNumber" {
 			t.Errorf("Expected method eth_getBlockByNumber, got %s", req.Method)
@@ -129,7 +129,7 @@ func TestClientGetFullBlock(t *testing.T) {
 		resp.Result, _ = json.Marshal(block)
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -151,7 +151,7 @@ func TestClientGetFullBlock(t *testing.T) {
 func TestClientGetBlockLogs(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req Request
-		json.NewDecoder(r.Body).Decode(&req)
+		_ = json.NewDecoder(r.Body).Decode(&req)
 
 		if req.Method != "eth_getLogs" {
 			t.Errorf("Expected method eth_getLogs, got %s", req.Method)
@@ -173,7 +173,7 @@ func TestClientGetBlockLogs(t *testing.T) {
 		resp.Result, _ = json.Marshal(logs)
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
