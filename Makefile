@@ -1,4 +1,4 @@
-.PHONY: build test lint run docker clean help
+.PHONY: build test run docker clean help
 
 # Variables
 BINARY_NAME := hlnode-proxy
@@ -20,10 +20,6 @@ build:
 ## test: Run tests with coverage
 test:
 	go test -v -race -coverprofile=coverage.txt ./...
-
-## lint: Run golangci-lint
-lint:
-	golangci-lint run
 
 ## run: Run the server locally
 run: build

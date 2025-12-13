@@ -69,7 +69,6 @@ ws.send(JSON.stringify({
 ```bash
 make build      # Build binary
 make test       # Run tests
-make lint       # Run golangci-lint
 make docker     # Build Docker image locally
 make run        # Build and run locally
 ```
@@ -79,7 +78,6 @@ make run        # Build and run locally
 ### Automatic Build
 
 Every push to `main` and every Pull Request triggers the **build** workflow:
-- Lint (golangci-lint)
 - Tests with coverage
 - Binary build
 - Docker image build

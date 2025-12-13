@@ -12,7 +12,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Multi-architecture Docker builds (amd64, arm64)
 - Automatic version tagging for Docker images
 - Makefile for local development
-- golangci-lint integration
 
 ### Changed
 - Improved Dockerfile with non-root user and OCI labels
