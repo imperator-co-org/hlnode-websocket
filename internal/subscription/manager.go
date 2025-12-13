@@ -20,6 +20,9 @@ const (
 	SubTypeLogs                   SubscriptionType = "logs"
 	SubTypeNewPendingTransactions SubscriptionType = "newPendingTransactions"
 	SubTypeSyncing                SubscriptionType = "syncing"
+	// Custom Hyperliquid subscriptions
+	SubTypeGasPrice      SubscriptionType = "gasPrice"
+	SubTypeBlockReceipts SubscriptionType = "blockReceipts"
 )
 
 // Subscription represents an active subscription

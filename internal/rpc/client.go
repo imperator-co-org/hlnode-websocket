@@ -166,3 +166,87 @@ func (c *Client) GetBlockLogs(ctx context.Context, blockNum string) ([]Log, erro
 
 	return logs, nil
 }
+
+// GetGasPrice fetches the current gas price
+func (c *Client) GetGasPrice(ctx context.Context) (string, error) {
+	req := &Request{
+		JSONRPC: "2.0",
+		Method:  "eth_gasPrice",
+		Params:  json.RawMessage("[]"),
+		ID:      json.RawMessage("1"),
+	}
+
+	resp, err := c.Call(ctx, req)
+	if err != nil {
+		return "", err
+	}
+
+	if resp.Error != nil {
+		return "", fmt.Errorf("RPC error: %s", resp.Error.Message)
+	}
+
+	var gasPrice string
+	if err := json.Unmarshal(resp.Result, &gasPrice); err != nil {
+		return "", fmt.Errorf("failed to unmarshal gas price: %w", err)
+	}
+
+	return gasPrice, nil
+}
+
+// GetBigBlockGasPrice fetches the big block gas price (Hyperliquid custom)
+func (c *Client) GetBigBlockGasPrice(ctx context.Context) (string, error) {
+	req := &Request{
+		JSONRPC: "2.0",
+		Method:  "eth_bigBlockGasPrice",
+		Params:  json.RawMessage("[]"),
+		ID:      json.RawMessage("1"),
+	}
+
+	resp, err := c.Call(ctx, req)
+	if err != nil {
+		return "", err
+	}
+
+	if resp.Error != nil {
+		// Method might not exist, return empty string
+		return "", nil
+	}
+
+	var gasPrice string
+	if err := json.Unmarshal(resp.Result, &gasPrice); err != nil {
+		return "", nil
+	}
+
+	return gasPrice, nil
+}
+
+// GetBlockReceipts fetches all transaction receipts for a block
+func (c *Client) GetBlockReceipts(ctx context.Context, blockNum string) ([]TransactionReceipt, error) {
+	params, _ := json.Marshal([]interface{}{blockNum})
+	req := &Request{
+		JSONRPC: "2.0",
+		Method:  "eth_getBlockReceipts",
+		Params:  params,
+		ID:      json.RawMessage("1"),
+	}
+
+	resp, err := c.Call(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.Error != nil {
+		return nil, fmt.Errorf("RPC error: %s", resp.Error.Message)
+	}
+
+	if resp.Result == nil || string(resp.Result) == "null" {
+		return nil, nil
+	}
+
+	var receipts []TransactionReceipt
+	if err := json.Unmarshal(resp.Result, &receipts); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal receipts: %w", err)
+	}
+
+	return receipts, nil
+}

@@ -68,6 +68,16 @@ var (
 		Help: "Log notifications sent to subscribers",
 	})
 
+	WSGasPriceNotificationsSent = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "hlnode_proxy_ws_gas_price_notifications_total",
+		Help: "Gas price notifications sent to subscribers",
+	})
+
+	WSBlockReceiptsNotificationsSent = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "hlnode_proxy_ws_block_receipts_notifications_total",
+		Help: "Block receipts notifications sent to subscribers",
+	})
+
 	// HTTP RPC metrics
 	RPCRequestsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "hlnode_proxy_rpc_requests_total",
@@ -118,6 +128,8 @@ func init() {
 		WSSubscriptionsRemoved,
 		WSBlockNotificationsSent,
 		WSLogNotificationsSent,
+		WSGasPriceNotificationsSent,
+		WSBlockReceiptsNotificationsSent,
 		// HTTP RPC
 		RPCRequestsTotal,
 		RPCRequestDuration,

@@ -40,3 +40,35 @@ type FullBlockHeader struct {
 	ExcessBlobGas         string `json:"excessBlobGas,omitempty"`
 	ParentBeaconBlockRoot string `json:"parentBeaconBlockRoot,omitempty"`
 }
+
+// TransactionReceipt represents a transaction receipt
+type TransactionReceipt struct {
+	BlockHash         string `json:"blockHash"`
+	BlockNumber       string `json:"blockNumber"`
+	ContractAddress   string `json:"contractAddress,omitempty"`
+	CumulativeGasUsed string `json:"cumulativeGasUsed"`
+	EffectiveGasPrice string `json:"effectiveGasPrice"`
+	From              string `json:"from"`
+	GasUsed           string `json:"gasUsed"`
+	Logs              []Log  `json:"logs"`
+	LogsBloom         string `json:"logsBloom"`
+	Status            string `json:"status"`
+	To                string `json:"to,omitempty"`
+	TransactionHash   string `json:"transactionHash"`
+	TransactionIndex  string `json:"transactionIndex"`
+	Type              string `json:"type"`
+}
+
+// BlockReceipts represents receipts for an entire block
+type BlockReceipts struct {
+	BlockNumber string               `json:"blockNumber"`
+	BlockHash   string               `json:"blockHash"`
+	Receipts    []TransactionReceipt `json:"receipts"`
+}
+
+// GasPriceInfo represents gas price information for subscription
+type GasPriceInfo struct {
+	GasPrice         string `json:"gasPrice"`
+	BigBlockGasPrice string `json:"bigBlockGasPrice,omitempty"`
+	BlockNumber      string `json:"blockNumber"`
+}

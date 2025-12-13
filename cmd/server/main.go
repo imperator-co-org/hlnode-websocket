@@ -87,6 +87,8 @@ func main() {
 				"logs":                   len(subMgr.GetSubscriptionsByType(subscription.SubTypeLogs)),
 				"newPendingTransactions": len(subMgr.GetSubscriptionsByType(subscription.SubTypeNewPendingTransactions)),
 				"syncing":                len(subMgr.GetSubscriptionsByType(subscription.SubTypeSyncing)),
+				"gasPrice":               len(subMgr.GetSubscriptionsByType(subscription.SubTypeGasPrice)),
+				"blockReceipts":          len(subMgr.GetSubscriptionsByType(subscription.SubTypeBlockReceipts)),
 			},
 		}
 
@@ -107,7 +109,7 @@ func main() {
 
 	go func() {
 		logger.Info("Endpoints: / (JSON-RPC + WebSocket), /metrics, /health, /connections, /stats")
-		logger.Info("Subscriptions: newHeads, logs, newPendingTransactions, syncing")
+		logger.Info("Subscriptions: newHeads, logs, newPendingTransactions, syncing, gasPrice, blockReceipts")
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Error("Server error: %v", err)
 			os.Exit(1)
@@ -130,6 +132,7 @@ func pollBlocks(client *rpc.Client, bc *broadcaster.Broadcaster, interval time.D
 	defer ticker.Stop()
 
 	var lastBlockNum string
+	var lastGasPrice string
 	ctx := context.Background()
 
 	for range ticker.C {
@@ -141,6 +144,28 @@ func pollBlocks(client *rpc.Client, bc *broadcaster.Broadcaster, interval time.D
 		}
 
 		metrics.UpstreamRequestsTotal.Inc()
+
+		// Broadcast gas price if changed (check every poll, not just on new block)
+		subMgr := bc.SubscriptionManager()
+		if len(subMgr.GetSubscriptionsByType(subscription.SubTypeGasPrice)) > 0 {
+			gasPrice, err := client.GetGasPrice(ctx)
+			if err == nil {
+				metrics.UpstreamRequestsTotal.Inc()
+				if gasPrice != lastGasPrice {
+					bigBlockGasPrice, _ := client.GetBigBlockGasPrice(ctx)
+					if bigBlockGasPrice != "" {
+						metrics.UpstreamRequestsTotal.Inc()
+					}
+					gasPriceInfo := &rpc.GasPriceInfo{
+						GasPrice:         gasPrice,
+						BigBlockGasPrice: bigBlockGasPrice,
+						BlockNumber:      blockNum,
+					}
+					bc.BroadcastGasPrice(gasPriceInfo)
+					lastGasPrice = gasPrice
+				}
+			}
+		}
 
 		if blockNum == "" || blockNum == lastBlockNum {
 			continue
@@ -162,6 +187,7 @@ func pollBlocks(client *rpc.Client, bc *broadcaster.Broadcaster, interval time.D
 			metrics.BlocksProcessedTotal.Inc()
 			bc.BroadcastNewHead(fullBlock)
 
+			// Broadcast logs
 			logs, err := client.GetBlockLogs(ctx, blockNum)
 			if err == nil {
 				metrics.UpstreamRequestsTotal.Inc()
@@ -169,6 +195,21 @@ func pollBlocks(client *rpc.Client, bc *broadcaster.Broadcaster, interval time.D
 					bc.BroadcastLog(&logEntry)
 				}
 			}
+
+			// Broadcast block receipts if there are subscribers
+			if len(subMgr.GetSubscriptionsByType(subscription.SubTypeBlockReceipts)) > 0 {
+				receipts, err := client.GetBlockReceipts(ctx, blockNum)
+				if err == nil {
+					metrics.UpstreamRequestsTotal.Inc()
+					blockReceipts := &rpc.BlockReceipts{
+						BlockNumber: fullBlock.Number,
+						BlockHash:   fullBlock.Hash,
+						Receipts:    receipts,
+					}
+					bc.BroadcastBlockReceipts(blockReceipts)
+				}
+			}
+
 			lastBlockNum = blockNum
 		}
 	}

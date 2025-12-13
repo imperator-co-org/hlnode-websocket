@@ -283,6 +283,44 @@ func (b *Broadcaster) BroadcastPendingTransaction(txHash string) {
 	}
 }
 
+// BroadcastGasPrice sends gas price updates to subscribers
+func (b *Broadcaster) BroadcastGasPrice(gasPriceInfo *rpc.GasPriceInfo) {
+	subs := b.subManager.GetSubscriptionsByType(subscription.SubTypeGasPrice)
+	if len(subs) == 0 {
+		return
+	}
+
+	for _, sub := range subs {
+		data, err := subscription.CreateNotification(sub.ID, gasPriceInfo)
+		if err != nil {
+			logger.Error("Failed to create gas price notification: %v", err)
+			continue
+		}
+		if b.SendToClient(sub.ClientID, data) {
+			metrics.WSGasPriceNotificationsSent.Inc()
+		}
+	}
+}
+
+// BroadcastBlockReceipts sends block receipts to subscribers
+func (b *Broadcaster) BroadcastBlockReceipts(receipts *rpc.BlockReceipts) {
+	subs := b.subManager.GetSubscriptionsByType(subscription.SubTypeBlockReceipts)
+	if len(subs) == 0 {
+		return
+	}
+
+	for _, sub := range subs {
+		data, err := subscription.CreateNotification(sub.ID, receipts)
+		if err != nil {
+			logger.Error("Failed to create block receipts notification: %v", err)
+			continue
+		}
+		if b.SendToClient(sub.ClientID, data) {
+			metrics.WSBlockReceiptsNotificationsSent.Inc()
+		}
+	}
+}
+
 // ClientCount returns the number of connected clients
 func (b *Broadcaster) ClientCount() int {
 	b.mu.RLock()
