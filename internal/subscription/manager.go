@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"strings"
 	"sync"
 
 	"hlnode-proxy/internal/logger"
@@ -30,9 +31,83 @@ type Subscription struct {
 }
 
 // LogFilter represents filter params for logs subscription
+// Supports flexible parsing where address can be string or []string
+// and topics can be (string | []string | null)[] for position-based OR matching
 type LogFilter struct {
-	Address []string   `json:"address,omitempty"`
-	Topics  [][]string `json:"topics,omitempty"`
+	Address []string
+	Topics  [][]string
+}
+
+// logFilterRaw is used for flexible JSON unmarshalling
+type logFilterRaw struct {
+	Address json.RawMessage   `json:"address,omitempty"`
+	Topics  []json.RawMessage `json:"topics,omitempty"`
+}
+
+// UnmarshalJSON implements custom unmarshalling for LogFilter
+// to handle flexible address and topics formats
+func (f *LogFilter) UnmarshalJSON(data []byte) error {
+	var raw logFilterRaw
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+
+	// Parse address: can be string or []string
+	if len(raw.Address) > 0 {
+		// Try as single string first
+		var singleAddr string
+		if err := json.Unmarshal(raw.Address, &singleAddr); err == nil {
+			f.Address = []string{normalizeAddress(singleAddr)}
+		} else {
+			// Try as array of strings
+			var addrArray []string
+			if err := json.Unmarshal(raw.Address, &addrArray); err == nil {
+				f.Address = make([]string, len(addrArray))
+				for i, addr := range addrArray {
+					f.Address[i] = normalizeAddress(addr)
+				}
+			}
+		}
+	}
+
+	// Parse topics: each element can be null, string, or []string
+	if len(raw.Topics) > 0 {
+		f.Topics = make([][]string, len(raw.Topics))
+		for i, topicRaw := range raw.Topics {
+			if topicRaw == nil || string(topicRaw) == "null" {
+				// null means match any topic at this position
+				f.Topics[i] = nil
+				continue
+			}
+
+			// Try as single string first
+			var singleTopic string
+			if err := json.Unmarshal(topicRaw, &singleTopic); err == nil {
+				f.Topics[i] = []string{normalizeTopic(singleTopic)}
+			} else {
+				// Try as array of strings (OR matching)
+				var topicArray []string
+				if err := json.Unmarshal(topicRaw, &topicArray); err == nil {
+					f.Topics[i] = make([]string, len(topicArray))
+					for j, topic := range topicArray {
+						f.Topics[i][j] = normalizeTopic(topic)
+					}
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+// normalizeAddress normalizes an Ethereum address to lowercase for comparison
+func normalizeAddress(addr string) string {
+	return strings.ToLower(addr)
+}
+
+// normalizeTopic normalizes a topic hash to lowercase for comparison
+func normalizeTopic(topic string) string {
+	return strings.ToLower(topic)
 }
 
 // Manager manages all active subscriptions
@@ -181,15 +256,18 @@ func CreateNotification(subID string, result interface{}) ([]byte, error) {
 }
 
 // MatchesLogFilter checks if a log matches the given filter
+// Comparison is case-insensitive since filter values are normalized to lowercase
 func MatchesLogFilter(logEntry *rpc.Log, filter *LogFilter) bool {
 	if filter == nil {
 		return true
 	}
 
+	// Check address filter (case-insensitive)
 	if len(filter.Address) > 0 {
 		found := false
+		logAddr := strings.ToLower(logEntry.Address)
 		for _, addr := range filter.Address {
-			if logEntry.Address == addr {
+			if logAddr == addr {
 				found = true
 				break
 			}
@@ -199,16 +277,22 @@ func MatchesLogFilter(logEntry *rpc.Log, filter *LogFilter) bool {
 		}
 	}
 
+	// Check topics filter (case-insensitive)
+	// Each topic position can have multiple values (OR matching)
+	// nil/empty at a position means match any
 	for i, topicFilter := range filter.Topics {
 		if len(topicFilter) == 0 {
+			// nil or empty slice means match any topic at this position
 			continue
 		}
 		if i >= len(logEntry.Topics) {
+			// Log doesn't have enough topics
 			return false
 		}
 		found := false
+		logTopic := strings.ToLower(logEntry.Topics[i])
 		for _, topic := range topicFilter {
-			if logEntry.Topics[i] == topic {
+			if logTopic == topic {
 				found = true
 				break
 			}
