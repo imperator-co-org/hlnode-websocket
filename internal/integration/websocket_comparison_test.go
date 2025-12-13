@@ -11,7 +11,7 @@ import (
 )
 
 // These tests compare the proxy WebSocket against a reference WebSocket
-// Run with: WS_COMPARE=ws://37.27.54.133:8545 go test -v ./internal/integration
+// Run with: WS_COMPARE=ws://volcano-compute:8545 go test -v ./internal/integration
 
 // WS_LOCAL is always localhost:8080
 const wsLocal = "ws://localhost:8080"

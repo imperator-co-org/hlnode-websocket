@@ -77,7 +77,7 @@ Run integration tests against the local proxy (requires a running proxy and `WS_
 ```bash
 # Required: set comparison endpoint
 # We set volcano-compute nanoreth for this example
-WS_COMPARE=ws://37.27.54.133:8545 go test -v ./internal/integration
+WS_COMPARE=ws://volcano-compute:8545 go test -v ./internal/integration
 ```
 
 | Variable | Required | Description |
