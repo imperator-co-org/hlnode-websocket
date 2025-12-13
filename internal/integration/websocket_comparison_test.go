@@ -2,7 +2,7 @@ package integration
 
 import (
 	"encoding/json"
-	"flag"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -11,12 +11,20 @@ import (
 )
 
 // These tests compare the proxy WebSocket against a reference WebSocket
-// Run with: go test -v ./internal/integration -proxy-ws ws://localhost:8080 -ref-ws ws://reference:8545
+// Run with: WS_COMPARE=ws://37.27.54.133:8545 go test -v ./internal/integration
 
-var (
-	proxyWS = flag.String("proxy-ws", "ws://localhost:8080", "Proxy WebSocket URL (e.g., ws://localhost:8080)")
-	refWS   = flag.String("ref-ws", "", "Reference WebSocket URL (e.g., ws://localhost:8545)")
-)
+// WS_LOCAL is always localhost:8080
+const wsLocal = "ws://localhost:8080"
+
+func getWSCompare() string {
+	return os.Getenv("WS_COMPARE")
+}
+
+func skipIfNoWSCompare(t *testing.T) {
+	if getWSCompare() == "" {
+		t.Skip("Skipping: WS_COMPARE env not set")
+	}
+}
 
 // Response format for comparison
 type JSONRPCResponse struct {
@@ -37,12 +45,6 @@ type SubscriptionResponse struct {
 		Subscription string          `json:"subscription"`
 		Result       json.RawMessage `json:"result"`
 	} `json:"params"`
-}
-
-func skipIfNoEndpoints(t *testing.T) {
-	if *proxyWS == "" {
-		t.Skip("Skipping: -proxy-ws not provided")
-	}
 }
 
 func connectWS(t *testing.T, url string) *websocket.Conn {
@@ -73,9 +75,9 @@ func sendAndReceive(t *testing.T, conn *websocket.Conn, request interface{}) JSO
 
 // TestProxyEthBlockNumber tests eth_blockNumber returns valid hex format
 func TestProxyEthBlockNumber(t *testing.T) {
-	skipIfNoEndpoints(t)
+	skipIfNoWSCompare(t)
 
-	conn := connectWS(t, *proxyWS)
+	conn := connectWS(t, wsLocal)
 	defer conn.Close()
 
 	request := map[string]interface{}{
@@ -109,9 +111,9 @@ func TestProxyEthBlockNumber(t *testing.T) {
 
 // TestProxyEthChainId tests eth_chainId returns valid hex format
 func TestProxyEthChainId(t *testing.T) {
-	skipIfNoEndpoints(t)
+	skipIfNoWSCompare(t)
 
-	conn := connectWS(t, *proxyWS)
+	conn := connectWS(t, wsLocal)
 	defer conn.Close()
 
 	request := map[string]interface{}{
@@ -140,9 +142,9 @@ func TestProxyEthChainId(t *testing.T) {
 
 // TestProxySubscribeNewHeads tests eth_subscribe returns valid subscription ID
 func TestProxySubscribeNewHeads(t *testing.T) {
-	skipIfNoEndpoints(t)
+	skipIfNoWSCompare(t)
 
-	conn := connectWS(t, *proxyWS)
+	conn := connectWS(t, wsLocal)
 	defer conn.Close()
 
 	request := map[string]interface{}{
@@ -202,14 +204,12 @@ func TestProxySubscribeNewHeads(t *testing.T) {
 
 // TestProxyCompareWithReference compares responses between proxy and reference
 func TestProxyCompareWithReference(t *testing.T) {
-	if *proxyWS == "" || *refWS == "" {
-		t.Skip("Skipping: both -proxy-ws and -ref-ws required for comparison")
-	}
+	skipIfNoWSCompare(t)
 
-	proxyConn := connectWS(t, *proxyWS)
+	proxyConn := connectWS(t, wsLocal)
 	defer proxyConn.Close()
 
-	refConn := connectWS(t, *refWS)
+	refConn := connectWS(t, getWSCompare())
 	defer refConn.Close()
 
 	// Test eth_blockNumber from both
@@ -242,9 +242,9 @@ func TestProxyCompareWithReference(t *testing.T) {
 
 // TestProxyEthGetBlockByNumber tests eth_getBlockByNumber response format
 func TestProxyEthGetBlockByNumber(t *testing.T) {
-	skipIfNoEndpoints(t)
+	skipIfNoWSCompare(t)
 
-	conn := connectWS(t, *proxyWS)
+	conn := connectWS(t, wsLocal)
 	defer conn.Close()
 
 	// First get latest block number
@@ -288,9 +288,9 @@ func TestProxyEthGetBlockByNumber(t *testing.T) {
 
 // TestProxyBatchRequest tests batch JSON-RPC requests
 func TestProxyBatchRequest(t *testing.T) {
-	skipIfNoEndpoints(t)
+	skipIfNoWSCompare(t)
 
-	conn := connectWS(t, *proxyWS)
+	conn := connectWS(t, wsLocal)
 	defer conn.Close()
 
 	batch := []map[string]interface{}{

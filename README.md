@@ -1,8 +1,5 @@
 # hlnode-proxy
 
-[![Build](https://github.com/imperatorco/hlnode_proxy/actions/workflows/build.yml/badge.svg)](https://github.com/imperatorco/hlnode_proxy/actions/workflows/build.yml)
-[![Docker](https://img.shields.io/docker/v/imperatorco/hlnode-proxy?label=Docker%20Hub)](https://hub.docker.com/r/imperatorco/hlnode-proxy)
-
 JSON-RPC and WebSocket proxy for Hyperliquid EVM with eth_subscribe support.
 
 ## Quick Start
@@ -72,6 +69,20 @@ make test       # Run tests
 make docker     # Build Docker image locally
 make run        # Build and run locally
 ```
+
+## Integration Tests
+
+Run integration tests against the local proxy (requires a running proxy and `WS_COMPARE` endpoint):
+
+```bash
+# Required: set comparison endpoint
+# We set volcano-compute nanoreth for this example
+WS_COMPARE=ws://37.27.54.133:8545 go test -v ./internal/integration
+```
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `WS_COMPARE` | Yes | External WebSocket endpoint for comparison tests |
 
 ## CI/CD
 
