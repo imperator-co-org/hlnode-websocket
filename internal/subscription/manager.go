@@ -16,10 +16,8 @@ import (
 type SubscriptionType string
 
 const (
-	SubTypeNewHeads               SubscriptionType = "newHeads"
-	SubTypeLogs                   SubscriptionType = "logs"
-	SubTypeNewPendingTransactions SubscriptionType = "newPendingTransactions"
-	SubTypeSyncing                SubscriptionType = "syncing"
+	SubTypeNewHeads SubscriptionType = "newHeads"
+	SubTypeLogs     SubscriptionType = "logs"
 	// Custom Hyperliquid subscriptions
 	SubTypeGasPrice      SubscriptionType = "gasPrice"
 	SubTypeBlockReceipts SubscriptionType = "blockReceipts"

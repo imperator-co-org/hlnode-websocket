@@ -180,17 +180,13 @@ func (h *WebSocketHandler) handleSubscribe(client *broadcaster.Client, req *rpc.
 		if len(params) > 1 {
 			filterParams = params[1]
 		}
-	case "newPendingTransactions":
-		subscriptionType = subscription.SubTypeNewPendingTransactions
-	case "syncing":
-		subscriptionType = subscription.SubTypeSyncing
 	case "gasPrice":
 		subscriptionType = subscription.SubTypeGasPrice
 	case "blockReceipts":
 		subscriptionType = subscription.SubTypeBlockReceipts
 	default:
 		h.sendError(client, req.ID, rpc.ErrCodeInvalidParams,
-			"Unsupported subscription type. Supported: newHeads, logs, newPendingTransactions, syncing, gasPrice, blockReceipts")
+			"Unsupported subscription type. Supported: newHeads, logs, gasPrice, blockReceipts")
 		return
 	}
 

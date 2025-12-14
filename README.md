@@ -47,8 +47,6 @@ Connect via WebSocket: `ws://localhost:8080`
 |------|-------------|--------|
 | `newHeads` | New block headers | ❌ |
 | `logs` | Contract event logs with filters | ❌ |
-| `newPendingTransactions` | Pending transactions (if supported by node) | ❌ |
-| `syncing` | Sync status changes | ❌ |
 | `gasPrice` | Gas price updates in real-time | ✅ Hyperliquid |
 | `blockReceipts` | All transaction receipts per block | ✅ Hyperliquid |
 
@@ -254,20 +252,6 @@ Receive all transaction receipts for each new block.
       ]
     }
   }
-}
-```
-
----
-
-### `syncing` - Subscribe to sync status
-
-**Request:**
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 8,
-  "method": "eth_subscribe",
-  "params": ["syncing"]
 }
 ```
 

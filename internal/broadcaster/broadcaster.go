@@ -266,23 +266,6 @@ func (b *Broadcaster) BroadcastLog(logEntry *rpc.Log) {
 	}
 }
 
-// BroadcastPendingTransaction sends pending tx hash to subscribers
-func (b *Broadcaster) BroadcastPendingTransaction(txHash string) {
-	subs := b.subManager.GetSubscriptionsByType(subscription.SubTypeNewPendingTransactions)
-	if len(subs) == 0 {
-		return
-	}
-
-	for _, sub := range subs {
-		data, err := subscription.CreateNotification(sub.ID, txHash)
-		if err != nil {
-			logger.Error("Failed to create pending tx notification: %v", err)
-			continue
-		}
-		b.SendToClient(sub.ClientID, data)
-	}
-}
-
 // BroadcastGasPrice sends gas price updates to subscribers
 func (b *Broadcaster) BroadcastGasPrice(gasPriceInfo *rpc.GasPriceInfo) {
 	subs := b.subManager.GetSubscriptionsByType(subscription.SubTypeGasPrice)

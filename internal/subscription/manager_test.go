@@ -65,7 +65,7 @@ func TestManagerUnsubscribeAll(t *testing.T) {
 
 	m.Subscribe("client1", SubTypeNewHeads, nil)
 	m.Subscribe("client1", SubTypeLogs, nil)
-	m.Subscribe("client1", SubTypeNewPendingTransactions, nil)
+	m.Subscribe("client1", SubTypeGasPrice, nil)
 
 	m.UnsubscribeAll("client1")
 

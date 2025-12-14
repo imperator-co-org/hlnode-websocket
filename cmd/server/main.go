@@ -83,12 +83,10 @@ func main() {
 				"totalDisconnections": bcStats.TotalDisconnections,
 			},
 			"subscriptions": map[string]int{
-				"newHeads":               len(subMgr.GetSubscriptionsByType(subscription.SubTypeNewHeads)),
-				"logs":                   len(subMgr.GetSubscriptionsByType(subscription.SubTypeLogs)),
-				"newPendingTransactions": len(subMgr.GetSubscriptionsByType(subscription.SubTypeNewPendingTransactions)),
-				"syncing":                len(subMgr.GetSubscriptionsByType(subscription.SubTypeSyncing)),
-				"gasPrice":               len(subMgr.GetSubscriptionsByType(subscription.SubTypeGasPrice)),
-				"blockReceipts":          len(subMgr.GetSubscriptionsByType(subscription.SubTypeBlockReceipts)),
+				"newHeads":      len(subMgr.GetSubscriptionsByType(subscription.SubTypeNewHeads)),
+				"logs":          len(subMgr.GetSubscriptionsByType(subscription.SubTypeLogs)),
+				"gasPrice":      len(subMgr.GetSubscriptionsByType(subscription.SubTypeGasPrice)),
+				"blockReceipts": len(subMgr.GetSubscriptionsByType(subscription.SubTypeBlockReceipts)),
 			},
 		}
 
@@ -109,7 +107,7 @@ func main() {
 
 	go func() {
 		logger.Info("Endpoints: / (JSON-RPC + WebSocket), /metrics, /health, /connections, /stats")
-		logger.Info("Subscriptions: newHeads, logs, newPendingTransactions, syncing, gasPrice, blockReceipts")
+		logger.Info("Subscriptions: newHeads, logs, gasPrice, blockReceipts")
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Error("Server error: %v", err)
 			os.Exit(1)
