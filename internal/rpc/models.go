@@ -72,3 +72,20 @@ type GasPriceInfo struct {
 	BigBlockGasPrice string `json:"bigBlockGasPrice,omitempty"`
 	BlockNumber      string `json:"blockNumber"`
 }
+
+// SyncStatus represents the syncing status (matches eth_syncing response)
+// When syncing: returns object with progress info
+// When not syncing: returns false (handled separately)
+type SyncStatus struct {
+	Syncing          bool   `json:"syncing"`
+	StartingBlock    string `json:"startingBlock,omitempty"`
+	CurrentBlock     string `json:"currentBlock,omitempty"`
+	HighestBlock     string `json:"highestBlock,omitempty"`
+	HealedBytecodes  string `json:"healedBytecodes,omitempty"`
+	HealedTrienodes  string `json:"healedTrienodes,omitempty"`
+	HealingBytecode  string `json:"healingBytecode,omitempty"`
+	HealingTrienodes string `json:"healingTrienodes,omitempty"`
+	SyncedAccounts   string `json:"syncedAccounts,omitempty"`
+	SyncedBytecodes  string `json:"syncedBytecodes,omitempty"`
+	SyncedStorage    string `json:"syncedStorage,omitempty"`
+}

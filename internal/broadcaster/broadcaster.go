@@ -304,6 +304,34 @@ func (b *Broadcaster) BroadcastBlockReceipts(receipts *rpc.BlockReceipts) {
 	}
 }
 
+// BroadcastSyncing sends sync status updates to subscribers
+// For Hyperliquid, this typically returns false (not syncing)
+func (b *Broadcaster) BroadcastSyncing(syncStatus *rpc.SyncStatus) {
+	subs := b.subManager.GetSubscriptionsByType(subscription.SubTypeSyncing)
+	if len(subs) == 0 {
+		return
+	}
+
+	// Standard eth_syncing subscription returns just the sync object or false
+	var result interface{}
+	if syncStatus.Syncing {
+		result = syncStatus
+	} else {
+		result = false
+	}
+
+	for _, sub := range subs {
+		data, err := subscription.CreateNotification(sub.ID, result)
+		if err != nil {
+			logger.Error("Failed to create sync notification: %v", err)
+			continue
+		}
+		if b.SendToClient(sub.ClientID, data) {
+			metrics.WSSyncingNotificationsSent.Inc()
+		}
+	}
+}
+
 // ClientCount returns the number of connected clients
 func (b *Broadcaster) ClientCount() int {
 	b.mu.RLock()

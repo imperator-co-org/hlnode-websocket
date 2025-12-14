@@ -23,6 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial release
 - JSON-RPC proxy for Hyperliquid EVM
 - WebSocket support with eth_subscribe
-- Subscriptions: newHeads, logs, gasPrice, blockReceipts
+- Subscriptions: newHeads, logs, gasPrice, blockReceipts, syncing
 - Prometheus metrics
 - Health check endpoint

@@ -87,6 +87,7 @@ func main() {
 				"logs":          len(subMgr.GetSubscriptionsByType(subscription.SubTypeLogs)),
 				"gasPrice":      len(subMgr.GetSubscriptionsByType(subscription.SubTypeGasPrice)),
 				"blockReceipts": len(subMgr.GetSubscriptionsByType(subscription.SubTypeBlockReceipts)),
+				"syncing":       len(subMgr.GetSubscriptionsByType(subscription.SubTypeSyncing)),
 			},
 		}
 
@@ -107,7 +108,7 @@ func main() {
 
 	go func() {
 		logger.Info("Endpoints: / (JSON-RPC + WebSocket), /metrics, /health, /connections, /stats")
-		logger.Info("Subscriptions: newHeads, logs, gasPrice, blockReceipts")
+		logger.Info("Subscriptions: newHeads, logs, gasPrice, blockReceipts, syncing")
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Error("Server error: %v", err)
 			os.Exit(1)
@@ -205,6 +206,15 @@ func pollBlocks(client *rpc.Client, bc *broadcaster.Broadcaster, interval time.D
 						Receipts:    receipts,
 					}
 					bc.BroadcastBlockReceipts(blockReceipts)
+				}
+			}
+
+			// Broadcast syncing status if there are subscribers
+			if len(subMgr.GetSubscriptionsByType(subscription.SubTypeSyncing)) > 0 {
+				syncStatus, err := client.GetSyncing(ctx)
+				if err == nil {
+					metrics.UpstreamRequestsTotal.Inc()
+					bc.BroadcastSyncing(syncStatus)
 				}
 			}
 

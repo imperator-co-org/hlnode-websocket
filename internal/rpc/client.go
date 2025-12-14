@@ -250,3 +250,38 @@ func (c *Client) GetBlockReceipts(ctx context.Context, blockNum string) ([]Trans
 
 	return receipts, nil
 }
+
+// GetSyncing fetches the current sync status
+func (c *Client) GetSyncing(ctx context.Context) (*SyncStatus, error) {
+	req := &Request{
+		JSONRPC: "2.0",
+		Method:  "eth_syncing",
+		Params:  json.RawMessage("[]"),
+		ID:      json.RawMessage("1"),
+	}
+
+	resp, err := c.Call(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.Error != nil {
+		return nil, fmt.Errorf("RPC error: %s", resp.Error.Message)
+	}
+
+	// eth_syncing returns either false or a sync status object
+	// Check if it's "false" (not syncing)
+	if string(resp.Result) == "false" {
+		return &SyncStatus{Syncing: false}, nil
+	}
+
+	// Try to parse as sync status object
+	var status SyncStatus
+	if err := json.Unmarshal(resp.Result, &status); err != nil {
+		// If it can't be parsed, assume not syncing
+		return &SyncStatus{Syncing: false}, nil
+	}
+
+	status.Syncing = true
+	return &status, nil
+}

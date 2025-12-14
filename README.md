@@ -49,6 +49,7 @@ Connect via WebSocket: `ws://localhost:8080`
 | `logs` | Contract event logs with filters | ❌ |
 | `gasPrice` | Gas price updates in real-time | ✅ Hyperliquid |
 | `blockReceipts` | All transaction receipts per block | ✅ Hyperliquid |
+| `syncing` | Sync status (eth_syncing compatible) | ✅ Hyperliquid |
 
 ---
 
@@ -250,6 +251,51 @@ Receive all transaction receipts for each new block.
           "logs": []
         }
       ]
+    }
+  }
+}
+```
+
+---
+
+### `syncing` - Subscribe to sync status (Custom)
+
+Real-time sync status updates. Returns `false` when not syncing, or sync details when syncing.
+
+**Request:**
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 6,
+  "method": "eth_subscribe",
+  "params": ["syncing"]
+}
+```
+
+**Notification (not syncing):**
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "eth_subscription",
+  "params": {
+    "subscription": "0x...",
+    "result": false
+  }
+}
+```
+
+**Notification (syncing):**
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "eth_subscription",
+  "params": {
+    "subscription": "0x...",
+    "result": {
+      "syncing": true,
+      "startingBlock": "0x0",
+      "currentBlock": "0x14c3a5f",
+      "highestBlock": "0x14c4000"
     }
   }
 }
