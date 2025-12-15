@@ -11,8 +11,8 @@ type Config struct {
 	// RPCURL is the upstream Hyperliquid EVM RPC URL
 	RPCURL string
 
-	// ProxyPort is the port for the HTTP/WebSocket server
-	ProxyPort int
+	// WSPort is the port for the WebSocket server
+	WSPort int
 
 	// PollInterval is the interval for polling new blocks
 	PollInterval time.Duration
@@ -22,7 +22,7 @@ type Config struct {
 func Load() *Config {
 	cfg := &Config{
 		RPCURL:       getEnv("RPC_URL", ""),
-		ProxyPort:    getEnvInt("PROXY_PORT", 8080),
+		WSPort:       getEnvInt("WS_PORT", 8080),
 		PollInterval: getEnvDuration("POLL_INTERVAL", 100*time.Millisecond),
 	}
 	return cfg

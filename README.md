@@ -1,14 +1,13 @@
 # hlnode-websocket
 
-JSON-RPC and WebSocket proxy for Hyperliquid EVM with eth_subscribe support.
+WebSocket server for Hyperliquid EVM with eth_subscribe support.
 
 ## Features
 
-- **Full JSON-RPC proxy**: Forwards all Hyperliquid EVM RPC methods
 - **WebSocket subscriptions**: Real-time streaming for blocks, logs, gas prices, and more
-- **Custom Hyperliquid subscriptions**: `gasPrice` and `blockReceipts` (unique to this proxy)
-- **Prometheus metrics**: Monitor all proxy activity
+- **Custom Hyperliquid subscriptions**: `gasPrice`, `blockReceipts`, `syncing`
 - **High performance**: Written in Go with minimal overhead
+- **Lightweight**: WebSocket-only, no HTTP RPC overhead
 
 ## Quick Start
 
@@ -26,16 +25,11 @@ make build
 RPC_URL=http://your-node:3001/evm ./hlnode-websocket
 ```
 
-## Endpoints
+## Endpoint
 
 | Endpoint | Description |
 |----------|-------------|
-| `POST /` | JSON-RPC (forwards all methods) |
-| `GET /` | WebSocket subscriptions (auto-detected) |
-| `GET /metrics` | Prometheus metrics |
-| `GET /health` | Health check |
-| `GET /connections` | List active clients |
-| `GET /stats` | Server statistics |
+| `ws://localhost:8080/` | WebSocket subscriptions |
 
 ## WebSocket Subscriptions
 
@@ -144,25 +138,6 @@ Connect via WebSocket: `ws://localhost:8080`
 }
 ```
 
-**Request (advanced topic filtering with OR logic):**
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 5,
-  "method": "eth_subscribe",
-  "params": [
-    "logs",
-    {
-      "topics": [
-        "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
-        null,
-        ["0x000000000000000000000000aaaa...", "0x000000000000000000000000bbbb..."]
-      ]
-    }
-  ]
-}
-```
-
 **Notification:**
 ```json
 {
@@ -260,7 +235,7 @@ Receive all transaction receipts for each new block.
 
 ### `syncing` - Subscribe to sync status (Custom)
 
-Real-time sync status updates. Returns `false` when not syncing, or sync details when syncing.
+Real-time sync status updates.
 
 **Request:**
 ```json
@@ -322,36 +297,12 @@ Real-time sync status updates. Returns `false` when not syncing, or sync details
 
 ---
 
-## Supported Hyperliquid RPC Methods
-
-All standard Ethereum JSON-RPC methods are forwarded:
-
-| Method | Notes |
-|--------|-------|
-| `eth_blockNumber` | ✅ |
-| `eth_call` | Latest block only |
-| `eth_chainId` | ✅ |
-| `eth_estimateGas` | Latest block only |
-| `eth_feeHistory` | ✅ |
-| `eth_gasPrice` | Base fee for next small block |
-| `eth_getBalance` | Latest block only |
-| `eth_getBlockByHash` | ✅ |
-| `eth_getBlockByNumber` | ✅ |
-| `eth_getBlockReceipts` | ✅ |
-| `eth_getLogs` | Up to 4 topics, 50 blocks |
-| `eth_getTransactionByHash` | ✅ |
-| `eth_getTransactionReceipt` | ✅ |
-| `eth_bigBlockGasPrice` | Hyperliquid: big block fee |
-| `eth_usingBigBlocks` | Hyperliquid: check big blocks |
-| `eth_getSystemTxsByBlockHash` | Hyperliquid: HyperCore txs |
-| `eth_getSystemTxsByBlockNumber` | Hyperliquid: HyperCore txs |
-
 ## Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `RPC_URL` | - | Upstream RPC URL (required) |
-| `PROXY_PORT` | `8080` | Server port |
+| `WS_PORT` | `8080` | WebSocket server port |
 | `POLL_INTERVAL` | `100ms` | Block polling interval |
 
 ## Development
@@ -373,19 +324,6 @@ git push origin v1.0.0
 ```
 
 **Docker Hub:** https://hub.docker.com/r/imperatorco/hlnode-websocket
-
-## Prometheus Metrics
-
-| Metric | Description |
-|--------|-------------|
-| `hlnode_proxy_ws_active_connections` | Active WebSocket connections |
-| `hlnode_proxy_ws_active_subscriptions{type}` | Active subscriptions by type |
-| `hlnode_proxy_ws_block_notifications_total` | Block notifications sent |
-| `hlnode_proxy_ws_log_notifications_total` | Log notifications sent |
-| `hlnode_proxy_ws_gas_price_notifications_total` | Gas price notifications sent |
-| `hlnode_proxy_ws_block_receipts_notifications_total` | Block receipts notifications sent |
-| `hlnode_proxy_rpc_requests_total{method}` | HTTP RPC requests by method |
-| `hlnode_proxy_blocks_processed_total` | Blocks processed |
 
 ## License
 

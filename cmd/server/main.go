@@ -23,7 +23,7 @@ func main() {
 
 	logger.Info("Starting hlnode-websocket")
 	logger.Info("Upstream RPC: %s", cfg.RPCURL)
-	logger.Info("HTTP Port: %d", cfg.ProxyPort)
+	logger.Info("WebSocket Port: %d", cfg.WSPort)
 	logger.Info("Poll Interval: %v", cfg.PollInterval)
 
 	rpcClient := rpc.NewClient(cfg.RPCURL)
@@ -41,7 +41,7 @@ func main() {
 	})
 
 	server := &http.Server{
-		Addr:              fmt.Sprintf(":%d", cfg.ProxyPort),
+		Addr:              fmt.Sprintf(":%d", cfg.WSPort),
 		Handler:           mux,
 		ReadTimeout:       30 * time.Second,
 		WriteTimeout:      30 * time.Second,

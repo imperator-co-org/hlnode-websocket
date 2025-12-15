@@ -23,7 +23,7 @@ FROM alpine:3.19
 
 # OCI Labels
 LABEL org.opencontainers.image.source="https://hub.docker.com/r/imperatorco/hlnode-websocket"
-LABEL org.opencontainers.image.description="JSON-RPC and WebSocket proxy for Hyperliquid EVM"
+LABEL org.opencontainers.image.description="WebSocket server for Hyperliquid EVM with eth_subscribe support"
 LABEL org.opencontainers.image.licenses="MIT"
 
 RUN apk --no-cache add ca-certificates
