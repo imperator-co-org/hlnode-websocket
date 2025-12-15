@@ -16,13 +16,13 @@ COPY . .
 # Build the binary with version info
 RUN CGO_ENABLED=0 GOOS=linux go build \
     -ldflags="-s -w -X main.version=${VERSION} -X main.commit=${COMMIT}" \
-    -o /hlnode-proxy ./cmd/server
+    -o /hlnode-websocket ./cmd/server
 
 # Runtime stage
 FROM alpine:3.19
 
 # OCI Labels
-LABEL org.opencontainers.image.source="https://hub.docker.com/r/imperatorco/hlnode-proxy"
+LABEL org.opencontainers.image.source="https://hub.docker.com/r/imperatorco/hlnode-websocket"
 LABEL org.opencontainers.image.description="JSON-RPC and WebSocket proxy for Hyperliquid EVM"
 LABEL org.opencontainers.image.licenses="MIT"
 
@@ -32,9 +32,9 @@ RUN adduser -D -u 1000 appuser
 WORKDIR /app
 
 # Copy the binary from builder
-COPY --from=builder /hlnode-proxy .
+COPY --from=builder /hlnode-websocket .
 
 USER appuser
 EXPOSE 8080
 
-CMD ["./hlnode-proxy"]
+CMD ["./hlnode-websocket"]

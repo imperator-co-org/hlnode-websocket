@@ -1,7 +1,7 @@
 .PHONY: build test run docker clean help
 
 # Variables
-BINARY_NAME := hlnode-proxy
+BINARY_NAME := hlnode-websocket
 VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 LDFLAGS := -ldflags="-s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT)"

@@ -7,9 +7,9 @@ import (
 	"strings"
 	"sync"
 
-	"hlnode-proxy/internal/logger"
-	"hlnode-proxy/internal/metrics"
-	"hlnode-proxy/internal/rpc"
+	"hlnode-websocket/internal/logger"
+	"hlnode-websocket/internal/metrics"
+	"hlnode-websocket/internal/rpc"
 )
 
 // SubscriptionType represents the type of subscription

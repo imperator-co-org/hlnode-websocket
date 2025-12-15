@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -10,21 +9,19 @@ import (
 	"syscall"
 	"time"
 
-	"hlnode-proxy/internal/broadcaster"
-	"hlnode-proxy/internal/config"
-	"hlnode-proxy/internal/handlers"
-	"hlnode-proxy/internal/logger"
-	"hlnode-proxy/internal/metrics"
-	"hlnode-proxy/internal/rpc"
-	"hlnode-proxy/internal/subscription"
-
-	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"hlnode-websocket/internal/broadcaster"
+	"hlnode-websocket/internal/config"
+	"hlnode-websocket/internal/handlers"
+	"hlnode-websocket/internal/logger"
+	"hlnode-websocket/internal/metrics"
+	"hlnode-websocket/internal/rpc"
+	"hlnode-websocket/internal/subscription"
 )
 
 func main() {
 	cfg := config.Load()
 
-	logger.Info("Starting hlnode-proxy")
+	logger.Info("Starting hlnode-websocket")
 	logger.Info("Upstream RPC: %s", cfg.RPCURL)
 	logger.Info("HTTP Port: %d", cfg.ProxyPort)
 	logger.Info("Poll Interval: %v", cfg.PollInterval)
@@ -34,64 +31,13 @@ func main() {
 	bc := broadcaster.NewBroadcaster()
 	go bc.Run()
 
-	httpHandler := handlers.NewHTTPHandler(rpcClient)
 	wsHandler := handlers.NewWebSocketHandler(rpcClient, bc)
 
 	mux := http.NewServeMux()
 
-	// Combined endpoint: detects WebSocket upgrade or JSON-RPC POST
+	// WebSocket only endpoint
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("Upgrade") == "websocket" {
-			wsHandler.ServeHTTP(w, r)
-			return
-		}
-		httpHandler.ServeHTTP(w, r)
-	})
-
-	// Prometheus metrics
-	mux.Handle("/metrics", promhttp.HandlerFor(metrics.Registry, promhttp.HandlerOpts{}))
-
-	// Health check
-	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":        "ok",
-			"activeClients": bc.GetStats().ActiveClients,
-		})
-	})
-
-	// List active connections
-	mux.HandleFunc("/connections", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"stats":   bc.GetStats(),
-			"clients": bc.GetAllClientsInfo(),
-		})
-	})
-
-	// Enhanced stats with all metrics
-	mux.HandleFunc("/stats", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-
-		bcStats := bc.GetStats()
-		subMgr := bc.SubscriptionManager()
-
-		response := map[string]interface{}{
-			"websocket": map[string]interface{}{
-				"activeConnections":   bcStats.ActiveClients,
-				"totalConnections":    bcStats.TotalConnections,
-				"totalDisconnections": bcStats.TotalDisconnections,
-			},
-			"subscriptions": map[string]int{
-				"newHeads":      len(subMgr.GetSubscriptionsByType(subscription.SubTypeNewHeads)),
-				"logs":          len(subMgr.GetSubscriptionsByType(subscription.SubTypeLogs)),
-				"gasPrice":      len(subMgr.GetSubscriptionsByType(subscription.SubTypeGasPrice)),
-				"blockReceipts": len(subMgr.GetSubscriptionsByType(subscription.SubTypeBlockReceipts)),
-				"syncing":       len(subMgr.GetSubscriptionsByType(subscription.SubTypeSyncing)),
-			},
-		}
-
-		json.NewEncoder(w).Encode(response)
+		wsHandler.ServeHTTP(w, r)
 	})
 
 	server := &http.Server{

@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"time"
 
-	"hlnode-proxy/internal/logger"
-	"hlnode-proxy/internal/metrics"
-	"hlnode-proxy/internal/rpc"
+	"hlnode-websocket/internal/logger"
+	"hlnode-websocket/internal/metrics"
+	"hlnode-websocket/internal/rpc"
 )
 
 // HTTPHandler handles JSON-RPC requests over HTTP

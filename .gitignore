@@ -1,5 +1,5 @@
 # Binaries
-hlnode-proxy
+hlnode-websocket
 *.exe
 *.dll
 *.so

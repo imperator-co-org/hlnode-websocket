@@ -1,4 +1,4 @@
-# hlnode-proxy
+# hlnode-websocket
 
 JSON-RPC and WebSocket proxy for Hyperliquid EVM with eth_subscribe support.
 
@@ -15,15 +15,15 @@ JSON-RPC and WebSocket proxy for Hyperliquid EVM with eth_subscribe support.
 ### Using Docker (recommended)
 
 ```bash
-docker pull imperatorco/hlnode-proxy:latest
-docker run -p 8080:8080 -e RPC_URL=http://your-node:3001/evm imperatorco/hlnode-proxy
+docker pull imperatorco/hlnode-websocket:latest
+docker run -p 8080:8080 -e RPC_URL=http://your-node:3001/evm imperatorco/hlnode-websocket
 ```
 
 ### From Source
 
 ```bash
 make build
-RPC_URL=http://your-node:3001/evm ./hlnode-proxy
+RPC_URL=http://your-node:3001/evm ./hlnode-websocket
 ```
 
 ## Endpoints
@@ -372,7 +372,7 @@ git tag v1.0.0
 git push origin v1.0.0
 ```
 
-**Docker Hub:** https://hub.docker.com/r/imperatorco/hlnode-proxy
+**Docker Hub:** https://hub.docker.com/r/imperatorco/hlnode-websocket
 
 ## Prometheus Metrics
 

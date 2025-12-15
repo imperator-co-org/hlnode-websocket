@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"hlnode-proxy/internal/rpc"
+	"hlnode-websocket/internal/rpc"
 )
 
 func TestManagerSubscribe(t *testing.T) {
