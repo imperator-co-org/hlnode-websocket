@@ -9,10 +9,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"hlnode-proxy/internal/logger"
-	"hlnode-proxy/internal/metrics"
-	"hlnode-proxy/internal/rpc"
-	"hlnode-proxy/internal/subscription"
+	"hlnode-websocket/internal/logger"
+	"hlnode-websocket/internal/metrics"
+	"hlnode-websocket/internal/rpc"
+	"hlnode-websocket/internal/subscription"
 
 	"github.com/gorilla/websocket"
 )

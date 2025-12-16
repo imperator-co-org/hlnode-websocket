@@ -10,13 +10,13 @@ import (
 	"syscall"
 	"time"
 
-	"hlnode-proxy/internal/broadcaster"
-	"hlnode-proxy/internal/config"
-	"hlnode-proxy/internal/handlers"
-	"hlnode-proxy/internal/logger"
-	"hlnode-proxy/internal/metrics"
-	"hlnode-proxy/internal/rpc"
-	"hlnode-proxy/internal/subscription"
+	"hlnode-websocket/internal/broadcaster"
+	"hlnode-websocket/internal/config"
+	"hlnode-websocket/internal/handlers"
+	"hlnode-websocket/internal/logger"
+	"hlnode-websocket/internal/metrics"
+	"hlnode-websocket/internal/rpc"
+	"hlnode-websocket/internal/subscription"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -24,7 +24,7 @@ import (
 func main() {
 	cfg := config.Load()
 
-	logger.Info("Starting hlnode-proxy")
+	logger.Info("Starting hlnode-websocket")
 	logger.Info("Upstream RPC: %s", cfg.RPCURL)
 	logger.Info("HTTP Port: %d", cfg.ProxyPort)
 	logger.Info("Poll Interval: %v", cfg.PollInterval)

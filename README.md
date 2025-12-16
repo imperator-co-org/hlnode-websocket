@@ -1,4 +1,4 @@
-# hlnode-proxy
+# hlnode-websocket
 
 JSON-RPC and WebSocket proxy for Hyperliquid EVM with eth_subscribe support.
 
@@ -15,15 +15,15 @@ JSON-RPC and WebSocket proxy for Hyperliquid EVM with eth_subscribe support.
 ### Using Docker (recommended)
 
 ```bash
-docker pull imperatorco/hlnode-proxy:latest
-docker run -p 8080:8080 -e RPC_URL=http://your-node:3001/evm imperatorco/hlnode-proxy
+docker pull imperatorco/hlnode-websocket:latest
+docker run -p 8080:8080 -e RPC_URL=http://your-node:3001/evm imperatorco/hlnode-websocket
 ```
 
 ### From Source
 
 ```bash
 make build
-RPC_URL=http://your-node:3001/evm ./hlnode-proxy
+RPC_URL=http://your-node:3001/evm ./hlnode-websocket
 ```
 
 ## Endpoints
@@ -372,20 +372,20 @@ git tag v1.0.0
 git push origin v1.0.0
 ```
 
-**Docker Hub:** https://hub.docker.com/r/imperatorco/hlnode-proxy
+**Docker Hub:** https://hub.docker.com/r/imperatorco/hlnode-websocket
 
 ## Prometheus Metrics
 
 | Metric | Description |
 |--------|-------------|
-| `hlnode_proxy_ws_active_connections` | Active WebSocket connections |
-| `hlnode_proxy_ws_active_subscriptions{type}` | Active subscriptions by type |
-| `hlnode_proxy_ws_block_notifications_total` | Block notifications sent |
-| `hlnode_proxy_ws_log_notifications_total` | Log notifications sent |
-| `hlnode_proxy_ws_gas_price_notifications_total` | Gas price notifications sent |
-| `hlnode_proxy_ws_block_receipts_notifications_total` | Block receipts notifications sent |
-| `hlnode_proxy_rpc_requests_total{method}` | HTTP RPC requests by method |
-| `hlnode_proxy_blocks_processed_total` | Blocks processed |
+| `hlnode_websocket_ws_active_connections` | Active WebSocket connections |
+| `hlnode_websocket_ws_active_subscriptions{type}` | Active subscriptions by type |
+| `hlnode_websocket_ws_block_notifications_total` | Block notifications sent |
+| `hlnode_websocket_ws_log_notifications_total` | Log notifications sent |
+| `hlnode_websocket_ws_gas_price_notifications_total` | Gas price notifications sent |
+| `hlnode_websocket_ws_block_receipts_notifications_total` | Block receipts notifications sent |
+| `hlnode_websocket_rpc_requests_total{method}` | HTTP RPC requests by method |
+| `hlnode_websocket_blocks_processed_total` | Blocks processed |
 
 ## License
 

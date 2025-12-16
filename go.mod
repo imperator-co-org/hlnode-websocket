@@ -1,4 +1,4 @@
-module hlnode-proxy
+module hlnode-websocket
 
 go 1.23.0
 

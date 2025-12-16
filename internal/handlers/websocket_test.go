@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"hlnode-proxy/internal/broadcaster"
-	"hlnode-proxy/internal/rpc"
+	"hlnode-websocket/internal/broadcaster"
+	"hlnode-websocket/internal/rpc"
 
 	"github.com/gorilla/websocket"
 )
