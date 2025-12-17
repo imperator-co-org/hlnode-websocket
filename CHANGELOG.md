@@ -64,7 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Initial release
-- WebSocket proxy for Hyperliquid EVM
+- WebSocket service for Hyperliquid EVM
 - WebSocket support with eth_subscribe
 - Subscriptions: newHeads, logs
 - Prometheus metrics

@@ -10,7 +10,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// These tests compare the proxy WebSocket against a reference WebSocket
+// These tests compare the local WebSocket against a reference WebSocket
 // Run with: WS_COMPARE=ws://volcano-compute:8545 go test -v ./internal/integration
 
 // WS_LOCAL is always localhost:8080
@@ -73,8 +73,8 @@ func sendAndReceive(t *testing.T, conn *websocket.Conn, request interface{}) JSO
 	return resp
 }
 
-// TestProxyEthBlockNumber tests eth_blockNumber returns valid hex format
-func TestProxyEthBlockNumber(t *testing.T) {
+// TestWebSocketEthBlockNumber tests eth_blockNumber returns valid hex format
+func TestWebSocketEthBlockNumber(t *testing.T) {
 	skipIfNoWSCompare(t)
 
 	conn := connectWS(t, wsLocal)
@@ -109,8 +109,8 @@ func TestProxyEthBlockNumber(t *testing.T) {
 	t.Logf("eth_blockNumber: %s", blockNum)
 }
 
-// TestProxyEthChainId tests eth_chainId returns valid hex format
-func TestProxyEthChainId(t *testing.T) {
+// TestWebSocketEthChainId tests eth_chainId returns valid hex format
+func TestWebSocketEthChainId(t *testing.T) {
 	skipIfNoWSCompare(t)
 
 	conn := connectWS(t, wsLocal)
@@ -140,8 +140,8 @@ func TestProxyEthChainId(t *testing.T) {
 	t.Logf("eth_chainId: %s", chainId)
 }
 
-// TestProxySubscribeNewHeads tests eth_subscribe returns valid subscription ID
-func TestProxySubscribeNewHeads(t *testing.T) {
+// TestWebSocketSubscribeNewHeads tests eth_subscribe returns valid subscription ID
+func TestWebSocketSubscribeNewHeads(t *testing.T) {
 	skipIfNoWSCompare(t)
 
 	conn := connectWS(t, wsLocal)
@@ -202,12 +202,12 @@ func TestProxySubscribeNewHeads(t *testing.T) {
 	t.Logf("Received block: %v", header["number"])
 }
 
-// TestProxyCompareWithReference compares responses between proxy and reference
-func TestProxyCompareWithReference(t *testing.T) {
+// TestWebSocketCompareWithReference compares responses between local and reference WebSocket
+func TestWebSocketCompareWithReference(t *testing.T) {
 	skipIfNoWSCompare(t)
 
-	proxyConn := connectWS(t, wsLocal)
-	defer proxyConn.Close()
+	localConn := connectWS(t, wsLocal)
+	defer localConn.Close()
 
 	refConn := connectWS(t, getWSCompare())
 	defer refConn.Close()
@@ -220,28 +220,28 @@ func TestProxyCompareWithReference(t *testing.T) {
 		"id":      1,
 	}
 
-	proxyResp := sendAndReceive(t, proxyConn, request)
+	localResp := sendAndReceive(t, localConn, request)
 	refResp := sendAndReceive(t, refConn, request)
 
 	// Both should have same format
-	if proxyResp.JSONRPC != refResp.JSONRPC {
-		t.Errorf("JSONRPC version mismatch: proxy=%s, ref=%s", proxyResp.JSONRPC, refResp.JSONRPC)
+	if localResp.JSONRPC != refResp.JSONRPC {
+		t.Errorf("JSONRPC version mismatch: local=%s, ref=%s", localResp.JSONRPC, refResp.JSONRPC)
 	}
 
 	// Both should be hex format
-	var proxyNum, refNum string
-	json.Unmarshal(proxyResp.Result, &proxyNum)
+	var localNum, refNum string
+	json.Unmarshal(localResp.Result, &localNum)
 	json.Unmarshal(refResp.Result, &refNum)
 
-	if !strings.HasPrefix(proxyNum, "0x") || !strings.HasPrefix(refNum, "0x") {
-		t.Errorf("Both should return hex: proxy=%s, ref=%s", proxyNum, refNum)
+	if !strings.HasPrefix(localNum, "0x") || !strings.HasPrefix(refNum, "0x") {
+		t.Errorf("Both should return hex: local=%s, ref=%s", localNum, refNum)
 	}
 
-	t.Logf("Proxy block: %s, Reference block: %s", proxyNum, refNum)
+	t.Logf("Local block: %s, Reference block: %s", localNum, refNum)
 }
 
-// TestProxyEthGetBlockByNumber tests eth_getBlockByNumber response format
-func TestProxyEthGetBlockByNumber(t *testing.T) {
+// TestWebSocketEthGetBlockByNumber tests eth_getBlockByNumber response format
+func TestWebSocketEthGetBlockByNumber(t *testing.T) {
 	skipIfNoWSCompare(t)
 
 	conn := connectWS(t, wsLocal)
@@ -286,8 +286,8 @@ func TestProxyEthGetBlockByNumber(t *testing.T) {
 	t.Logf("Block %s: hash=%v", blockNum, block["hash"])
 }
 
-// TestProxyBatchRequest tests batch JSON-RPC requests
-func TestProxyBatchRequest(t *testing.T) {
+// TestWebSocketBatchRequest tests batch JSON-RPC requests
+func TestWebSocketBatchRequest(t *testing.T) {
 	skipIfNoWSCompare(t)
 
 	conn := connectWS(t, wsLocal)
