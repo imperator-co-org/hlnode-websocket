@@ -1,4 +1,4 @@
-.PHONY: build test run docker clean help
+.PHONY: build test test-unit test-integration run docker clean help
 
 # Variables
 BINARY_NAME := hlnode-websocket
@@ -17,9 +17,22 @@ help:
 build:
 	CGO_ENABLED=0 go build $(LDFLAGS) -o $(BINARY_NAME) ./cmd/server
 
-## test: Run tests with coverage
-test:
+## test: Run all tests (unit tests only, integration tests require WS_COMPARE)
+test: test-unit
+
+## test-unit: Run unit tests with coverage
+test-unit:
 	go test -v -race -coverprofile=coverage.txt ./...
+
+## test-integration: Run integration tests against a nanoreth node
+## Usage: make test-integration WS_COMPARE=ws://your-node:8545
+test-integration:
+	@if [ -z "$(WS_COMPARE)" ]; then \
+		echo "Error: WS_COMPARE is required. Set it to a nanoreth node WebSocket URL."; \
+		echo "Usage: make test-integration WS_COMPARE=ws://your-node:8545"; \
+		exit 1; \
+	fi
+	WS_COMPARE=$(WS_COMPARE) go test -v ./internal/integration/...
 
 ## run: Run the server locally
 run: build

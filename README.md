@@ -75,11 +75,22 @@ Connect via WebSocket: `ws://localhost:8080`
 ## Development
 
 ```bash
-make build      # Build binary
-make test       # Run tests
-make docker     # Build Docker image locally
-make run        # Build and run locally
+make build            # Build binary
+make test             # Run unit tests
+make test-integration WS_COMPARE=ws://your-node:8545  # Run integration tests
+make docker           # Build Docker image locally
+make run              # Build and run locally
 ```
+
+### Integration Tests
+
+Run integration tests to compare your local WebSocket against a reference node:
+
+```bash
+make test-integration WS_COMPARE=ws://your-reference-node:8545
+```
+
+> **Note:** `WS_COMPARE` must point to a Hyperliquid node running **nanoreth** (the native Hyperliquid EVM execution client).
 
 ## CI/CD
 

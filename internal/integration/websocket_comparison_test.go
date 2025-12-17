@@ -709,3 +709,176 @@ func TestWebSocketInvalidSubscription(t *testing.T) {
 
 	t.Logf("Got expected error: %s", resp.Error.Message)
 }
+
+// TestWebSocketCompareLogsWithTopicFilter compares logs subscription responses between
+// local and reference WebSocket when using topic-only filter (no address)
+func TestWebSocketCompareLogsWithTopicFilter(t *testing.T) {
+	skipIfNoWSCompare(t)
+
+	localConn := connectWS(t, wsLocal)
+	defer localConn.Close()
+
+	refConn := connectWS(t, getWSCompare())
+	defer refConn.Close()
+
+	// Subscribe to logs with topic filter only (Transfer event signature)
+	// This is the exact example from the README
+	transferTopic := "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+	request := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"method":  "eth_subscribe",
+		"params": []interface{}{
+			"logs",
+			map[string]interface{}{
+				"topics": []string{transferTopic},
+			},
+		},
+		"id": 1,
+	}
+
+	// Subscribe on local
+	localResp := sendAndReceive(t, localConn, request)
+	if localResp.Error != nil {
+		t.Errorf("Local subscription error: %s", localResp.Error.Message)
+		return
+	}
+
+	var localSubID string
+	json.Unmarshal(localResp.Result, &localSubID)
+	t.Logf("Local subscription ID: %s", localSubID)
+
+	// Subscribe on reference
+	refResp := sendAndReceive(t, refConn, request)
+	if refResp.Error != nil {
+		t.Errorf("Reference subscription error: %s", refResp.Error.Message)
+		return
+	}
+
+	var refSubID string
+	json.Unmarshal(refResp.Result, &refSubID)
+	t.Logf("Reference subscription ID: %s", refSubID)
+
+	// Both should return hex subscription IDs
+	if !strings.HasPrefix(localSubID, "0x") || !strings.HasPrefix(refSubID, "0x") {
+		t.Errorf("Both IDs should be hex: local=%s, ref=%s", localSubID, refSubID)
+	}
+
+	// Wait for log notifications from both and compare
+	t.Log("Waiting for log notifications from both WebSockets...")
+
+	// Create channels to receive notifications
+	type logNotification struct {
+		subscription string
+		log          map[string]interface{}
+		raw          string
+		err          error
+	}
+
+	localChan := make(chan logNotification, 1)
+	refChan := make(chan logNotification, 1)
+
+	// Read from local
+	go func() {
+		localConn.SetReadDeadline(time.Now().Add(60 * time.Second))
+		_, message, err := localConn.ReadMessage()
+		if err != nil {
+			localChan <- logNotification{err: err}
+			return
+		}
+		var notification SubscriptionResponse
+		if err := json.Unmarshal(message, &notification); err != nil {
+			localChan <- logNotification{err: err}
+			return
+		}
+		var logData map[string]interface{}
+		json.Unmarshal(notification.Params.Result, &logData)
+		localChan <- logNotification{
+			subscription: notification.Params.Subscription,
+			log:          logData,
+			raw:          string(notification.Params.Result),
+		}
+	}()
+
+	// Read from reference
+	go func() {
+		refConn.SetReadDeadline(time.Now().Add(60 * time.Second))
+		_, message, err := refConn.ReadMessage()
+		if err != nil {
+			refChan <- logNotification{err: err}
+			return
+		}
+		var notification SubscriptionResponse
+		if err := json.Unmarshal(message, &notification); err != nil {
+			refChan <- logNotification{err: err}
+			return
+		}
+		var logData map[string]interface{}
+		json.Unmarshal(notification.Params.Result, &logData)
+		refChan <- logNotification{
+			subscription: notification.Params.Subscription,
+			log:          logData,
+			raw:          string(notification.Params.Result),
+		}
+	}()
+
+	// Wait for both notifications with timeout
+	var localLog, refLog logNotification
+	timeout := time.After(65 * time.Second)
+
+	for i := 0; i < 2; i++ {
+		select {
+		case localLog = <-localChan:
+			if localLog.err != nil {
+				t.Logf("Local notification error (may be expected): %v", localLog.err)
+			} else {
+				t.Logf("Received local log notification")
+			}
+		case refLog = <-refChan:
+			if refLog.err != nil {
+				t.Logf("Reference notification error (may be expected): %v", refLog.err)
+			} else {
+				t.Logf("Received reference log notification")
+			}
+		case <-timeout:
+			t.Logf("Timeout waiting for notifications (may be expected if no Transfer events)")
+			return
+		}
+	}
+
+	// If both received notifications, compare the log structure
+	if localLog.err == nil && refLog.err == nil {
+		t.Log("Comparing log notification structures...")
+
+		// Check both have required fields
+		requiredFields := []string{"address", "topics", "data", "blockNumber", "transactionHash", "logIndex"}
+		for _, field := range requiredFields {
+			_, localHas := localLog.log[field]
+			_, refHas := refLog.log[field]
+
+			if localHas != refHas {
+				t.Errorf("Field '%s' presence mismatch: local=%v, ref=%v", field, localHas, refHas)
+			}
+		}
+
+		// Log both responses for comparison
+		t.Logf("Local log: blockNumber=%v, address=%v, logIndex=%v",
+			localLog.log["blockNumber"], localLog.log["address"], localLog.log["logIndex"])
+		t.Logf("Reference log: blockNumber=%v, address=%v, logIndex=%v",
+			refLog.log["blockNumber"], refLog.log["address"], refLog.log["logIndex"])
+
+		// Check topics match the filter (first topic should be Transfer signature)
+		if localTopics, ok := localLog.log["topics"].([]interface{}); ok && len(localTopics) > 0 {
+			if localTopics[0] != transferTopic {
+				t.Errorf("Local log topic[0] mismatch: expected %s, got %v", transferTopic, localTopics[0])
+			}
+		}
+
+		if refTopics, ok := refLog.log["topics"].([]interface{}); ok && len(refTopics) > 0 {
+			if refTopics[0] != transferTopic {
+				t.Errorf("Reference log topic[0] mismatch: expected %s, got %v", transferTopic, refTopics[0])
+			}
+		}
+
+		t.Log("Both WebSockets returned correctly structured log notifications!")
+	}
+}

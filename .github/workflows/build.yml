@@ -21,10 +21,14 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
-      - name: Run tests
+      - name: Run unit tests
         run: go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
+
+      - name: Run integration tests
+        # WS_COMPARE must point to a Hyperliquid node running nanoreth
+        run: go test -v ./internal/integration/...
         env:
-          WS_COMPARE: ws://37.27.54.133:8545
+          WS_COMPARE: ${{ vars.WS_COMPARE }}
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
