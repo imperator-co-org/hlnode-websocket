@@ -1,10 +1,9 @@
 # hlnode-websocket
 
-JSON-RPC and WebSocket proxy for Hyperliquid EVM with eth_subscribe support.
+WebSocket proxy for Hyperliquid EVM with eth_subscribe support.
 
 ## Features
 
-- **Full JSON-RPC proxy**: Forwards all Hyperliquid EVM RPC methods
 - **WebSocket subscriptions**: Real-time streaming for blocks, logs, gas prices, and more
 - **Custom Hyperliquid subscriptions**: `gasPrice` and `blockReceipts` (unique to this proxy)
 - **Prometheus metrics**: Monitor all proxy activity
@@ -30,8 +29,7 @@ RPC_URL=http://your-node:3001/evm ./hlnode-websocket
 
 | Endpoint | Description |
 |----------|-------------|
-| `POST /` | JSON-RPC (forwards all methods) |
-| `GET /` | WebSocket subscriptions (auto-detected) |
+| `ws://` `/` | WebSocket subscriptions |
 | `GET /metrics` | Prometheus metrics |
 | `GET /health` | Health check |
 | `GET /connections` | List active clients |
@@ -322,30 +320,6 @@ Real-time sync status updates. Returns `false` when not syncing, or sync details
 
 ---
 
-## Supported Hyperliquid RPC Methods
-
-All standard Ethereum JSON-RPC methods are forwarded:
-
-| Method | Notes |
-|--------|-------|
-| `eth_blockNumber` | ✅ |
-| `eth_call` | Latest block only |
-| `eth_chainId` | ✅ |
-| `eth_estimateGas` | Latest block only |
-| `eth_feeHistory` | ✅ |
-| `eth_gasPrice` | Base fee for next small block |
-| `eth_getBalance` | Latest block only |
-| `eth_getBlockByHash` | ✅ |
-| `eth_getBlockByNumber` | ✅ |
-| `eth_getBlockReceipts` | ✅ |
-| `eth_getLogs` | Up to 4 topics, 50 blocks |
-| `eth_getTransactionByHash` | ✅ |
-| `eth_getTransactionReceipt` | ✅ |
-| `eth_bigBlockGasPrice` | Hyperliquid: big block fee |
-| `eth_usingBigBlocks` | Hyperliquid: check big blocks |
-| `eth_getSystemTxsByBlockHash` | Hyperliquid: HyperCore txs |
-| `eth_getSystemTxsByBlockNumber` | Hyperliquid: HyperCore txs |
-
 ## Environment Variables
 
 | Variable | Default | Description |
@@ -384,7 +358,6 @@ git push origin v1.0.0
 | `hlnode_websocket_ws_log_notifications_total` | Log notifications sent |
 | `hlnode_websocket_ws_gas_price_notifications_total` | Gas price notifications sent |
 | `hlnode_websocket_ws_block_receipts_notifications_total` | Block receipts notifications sent |
-| `hlnode_websocket_rpc_requests_total{method}` | HTTP RPC requests by method |
 | `hlnode_websocket_blocks_processed_total` | Blocks processed |
 
 ## License
