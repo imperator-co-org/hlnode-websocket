@@ -83,23 +83,6 @@ var (
 		Help: "Syncing notifications sent to subscribers",
 	})
 
-	// HTTP RPC metrics
-	RPCRequestsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "hlnode_websocket_rpc_requests_total",
-		Help: "HTTP JSON-RPC requests by method",
-	}, []string{"method"})
-
-	RPCRequestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Name:    "hlnode_websocket_rpc_request_duration_seconds",
-		Help:    "HTTP JSON-RPC request duration",
-		Buckets: []float64{0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5},
-	}, []string{"method"})
-
-	RPCErrorsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "hlnode_websocket_rpc_errors_total",
-		Help: "HTTP JSON-RPC errors by type",
-	}, []string{"error_type"})
-
 	// Upstream metrics (shared)
 	UpstreamRequestsTotal = prometheus.NewCounter(prometheus.CounterOpts{
 		Name: "hlnode_websocket_upstream_requests_total",
@@ -136,10 +119,7 @@ func init() {
 		WSGasPriceNotificationsSent,
 		WSBlockReceiptsNotificationsSent,
 		WSSyncingNotificationsSent,
-		// HTTP RPC
-		RPCRequestsTotal,
-		RPCRequestDuration,
-		RPCErrorsTotal,
+
 		// Upstream
 		UpstreamRequestsTotal,
 		UpstreamErrorsTotal,

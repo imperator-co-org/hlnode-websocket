@@ -34,18 +34,19 @@ func main() {
 	bc := broadcaster.NewBroadcaster()
 	go bc.Run()
 
-	httpHandler := handlers.NewHTTPHandler(rpcClient)
 	wsHandler := handlers.NewWebSocketHandler(rpcClient, bc)
 
 	mux := http.NewServeMux()
 
-	// Combined endpoint: detects WebSocket upgrade or JSON-RPC POST
+	// WebSocket endpoint
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("Upgrade") == "websocket" {
-			wsHandler.ServeHTTP(w, r)
+		if r.Header.Get("Upgrade") != "websocket" {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(`{"error": "WebSocket connection required"}`))
 			return
 		}
-		httpHandler.ServeHTTP(w, r)
+		wsHandler.ServeHTTP(w, r)
 	})
 
 	// Prometheus metrics
@@ -107,7 +108,7 @@ func main() {
 	go pollBlocks(rpcClient, bc, cfg.PollInterval)
 
 	go func() {
-		logger.Info("Endpoints: / (JSON-RPC + WebSocket), /metrics, /health, /connections, /stats")
+		logger.Info("Endpoints: / (WebSocket), /metrics, /health, /connections, /stats")
 		logger.Info("Subscriptions: newHeads, logs, gasPrice, blockReceipts, syncing")
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Error("Server error: %v", err)
