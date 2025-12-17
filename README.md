@@ -258,7 +258,7 @@ Receive all transaction receipts for each new block.
 
 ### `syncing` - Subscribe to sync status (Custom)
 
-**Smart sync detection**: Returns `false` if node is in sync, or an object with `syncing: true` if the latest block is older than `SYNC_THRESHOLD` (default: 15s). Compatible with `eth_syncing` response format.
+**Smart sync detection**: Returns `false` if node is in sync, `true` if block is older than `SYNC_THRESHOLD` (default: 15s).
 
 **Request:**
 ```json
@@ -282,17 +282,14 @@ Receive all transaction receipts for each new block.
 }
 ```
 
-**Notification (node out of sync - block too old):**
+**Notification (node out of sync):**
 ```json
 {
   "jsonrpc": "2.0",
   "method": "eth_subscription",
   "params": {
     "subscription": "0x...",
-    "result": {
-      "syncing": true,
-      "currentBlock": "0x14c3a5f"
-    }
+    "result": true
   }
 }
 ```

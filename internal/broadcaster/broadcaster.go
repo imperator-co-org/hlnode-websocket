@@ -305,20 +305,15 @@ func (b *Broadcaster) BroadcastBlockReceipts(receipts *rpc.BlockReceipts) {
 }
 
 // BroadcastSyncing sends sync status updates to subscribers
-// For Hyperliquid, this typically returns false (not syncing)
+// Returns false if node is in sync, true if node is out of sync
 func (b *Broadcaster) BroadcastSyncing(syncStatus *rpc.SyncStatus) {
 	subs := b.subManager.GetSubscriptionsByType(subscription.SubTypeSyncing)
 	if len(subs) == 0 {
 		return
 	}
 
-	// Standard eth_syncing subscription returns just the sync object or false
-	var result interface{}
-	if syncStatus.Syncing {
-		result = syncStatus
-	} else {
-		result = false
-	}
+	// Simple boolean: false = in sync, true = out of sync
+	result := syncStatus.Syncing
 
 	for _, sub := range subs {
 		data, err := subscription.CreateNotification(sub.ID, result)
