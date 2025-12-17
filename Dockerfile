@@ -35,6 +35,5 @@ WORKDIR /app
 COPY --from=builder /hlnode-websocket .
 
 USER appuser
-EXPOSE 8080
 
 CMD ["./hlnode-websocket"]
