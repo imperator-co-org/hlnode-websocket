@@ -47,7 +47,7 @@ Connect via WebSocket: `ws://localhost:8080`
 | `logs` | Contract event logs with filters | ❌ |
 | `gasPrice` | Gas price updates in real-time | ✅ Hyperliquid |
 | `blockReceipts` | All transaction receipts per block | ✅ Hyperliquid |
-| `syncing` | Sync status (eth_syncing compatible) | ✅ Hyperliquid |
+| `syncing` | Smart sync detection (block age based) | ✅ Hyperliquid |
 
 ---
 
@@ -258,7 +258,7 @@ Receive all transaction receipts for each new block.
 
 ### `syncing` - Subscribe to sync status (Custom)
 
-Real-time sync status updates. Returns `false` when not syncing, or sync details when syncing.
+**Smart sync detection**: Returns `syncing: true` if the latest block is older than `SYNC_THRESHOLD` (default: 15s). This provides real-time monitoring of node sync status without relying on `eth_syncing`.
 
 **Request:**
 ```json
@@ -270,19 +270,22 @@ Real-time sync status updates. Returns `false` when not syncing, or sync details
 }
 ```
 
-**Notification (not syncing):**
+**Notification (node in sync):**
 ```json
 {
   "jsonrpc": "2.0",
   "method": "eth_subscription",
   "params": {
     "subscription": "0x...",
-    "result": false
+    "result": {
+      "syncing": false,
+      "currentBlock": "0x14c3a5f"
+    }
   }
 }
 ```
 
-**Notification (syncing):**
+**Notification (node out of sync - block too old):**
 ```json
 {
   "jsonrpc": "2.0",
@@ -291,9 +294,7 @@ Real-time sync status updates. Returns `false` when not syncing, or sync details
     "subscription": "0x...",
     "result": {
       "syncing": true,
-      "startingBlock": "0x0",
-      "currentBlock": "0x14c3a5f",
-      "highestBlock": "0x14c4000"
+      "currentBlock": "0x14c3a5f"
     }
   }
 }
@@ -327,6 +328,7 @@ Real-time sync status updates. Returns `false` when not syncing, or sync details
 | `RPC_URL` | - | Upstream RPC URL (required) |
 | `PROXY_PORT` | `8080` | Server port |
 | `POLL_INTERVAL` | `100ms` | Block polling interval |
+| `SYNC_THRESHOLD` | `15s` | Max block age before node is considered out of sync |
 
 ## Development
 

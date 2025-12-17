@@ -16,14 +16,18 @@ type Config struct {
 
 	// PollInterval is the interval for polling new blocks
 	PollInterval time.Duration
+
+	// SyncThreshold is the maximum allowed block age before considering node out of sync
+	SyncThreshold time.Duration
 }
 
 // Load reads configuration from environment variables
 func Load() *Config {
 	cfg := &Config{
-		RPCURL:       getEnv("RPC_URL", ""),
-		ProxyPort:    getEnvInt("PROXY_PORT", 8080),
-		PollInterval: getEnvDuration("POLL_INTERVAL", 100*time.Millisecond),
+		RPCURL:        getEnv("RPC_URL", ""),
+		ProxyPort:     getEnvInt("PROXY_PORT", 8080),
+		PollInterval:  getEnvDuration("POLL_INTERVAL", 100*time.Millisecond),
+		SyncThreshold: getEnvDuration("SYNC_THRESHOLD", 15*time.Second),
 	}
 	return cfg
 }

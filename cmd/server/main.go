@@ -105,7 +105,7 @@ func main() {
 		MaxHeaderBytes:    1 << 20,
 	}
 
-	go pollBlocks(rpcClient, bc, cfg.PollInterval)
+	go pollBlocks(rpcClient, bc, cfg)
 
 	go func() {
 		logger.Info("Endpoints: / (WebSocket), /metrics, /health, /connections, /stats")
@@ -127,8 +127,8 @@ func main() {
 	logger.Info("Stopped")
 }
 
-func pollBlocks(client *rpc.Client, bc *broadcaster.Broadcaster, interval time.Duration) {
-	ticker := time.NewTicker(interval)
+func pollBlocks(client *rpc.Client, bc *broadcaster.Broadcaster, cfg *config.Config) {
+	ticker := time.NewTicker(cfg.PollInterval)
 	defer ticker.Stop()
 
 	var lastBlockNum string
@@ -210,13 +210,27 @@ func pollBlocks(client *rpc.Client, bc *broadcaster.Broadcaster, interval time.D
 				}
 			}
 
-			// Broadcast syncing status if there are subscribers
+			// Broadcast syncing status if there are subscribers (smart detection based on block age)
 			if len(subMgr.GetSubscriptionsByType(subscription.SubTypeSyncing)) > 0 {
-				syncStatus, err := client.GetSyncing(ctx)
-				if err == nil {
-					metrics.UpstreamRequestsTotal.Inc()
-					bc.BroadcastSyncing(syncStatus)
+				// Parse block timestamp (hex string to int64)
+				var blockTimestamp int64
+				fmt.Sscanf(fullBlock.Timestamp, "0x%x", &blockTimestamp)
+				blockTime := time.Unix(blockTimestamp, 0)
+				blockAge := time.Since(blockTime)
+
+				// Node is syncing if block is older than threshold
+				isSyncing := blockAge > cfg.SyncThreshold
+
+				syncStatus := &rpc.SyncStatus{
+					Syncing:      isSyncing,
+					CurrentBlock: fullBlock.Number,
 				}
+
+				if isSyncing {
+					logger.Warn("Node out of sync: block %s is %.1fs old (threshold: %v)", fullBlock.Number, blockAge.Seconds(), cfg.SyncThreshold)
+				}
+
+				bc.BroadcastSyncing(syncStatus)
 			}
 
 			lastBlockNum = blockNum
