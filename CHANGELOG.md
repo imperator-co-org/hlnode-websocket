@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.5] - 2025-12-17
+
+### Added
+- **Smart sync detection**: `syncing` subscription now compares block timestamp with current time
+- New `SYNC_THRESHOLD` environment variable (default: 15s) to configure max block age
+
+### Changed
+- `syncing` subscription no longer forwards `eth_syncing`, uses intelligent block age detection instead
+
 ## [1.0.4] - 2025-12-17
 
 ### Changed
