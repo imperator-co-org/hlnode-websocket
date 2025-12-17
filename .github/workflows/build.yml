@@ -45,7 +45,7 @@ jobs:
           go-version: '1.23'
 
       - name: Build binary
-        run: CGO_ENABLED=0 go build -o hlnode-proxy ./cmd/server
+        run: CGO_ENABLED=0 go build -o hlnode-websocket ./cmd/server
 
       - name: Build Docker image
-        run: docker build -t hlnode-proxy:ci .
+        run: docker build -t hlnode-websocket:ci .

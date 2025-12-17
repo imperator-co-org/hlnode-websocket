@@ -1,12 +1,12 @@
 # hlnode-websocket
 
-WebSocket proxy for Hyperliquid EVM with eth_subscribe support.
+WebSocket service for Hyperliquid EVM with eth_subscribe support.
 
 ## Features
 
 - **WebSocket subscriptions**: Real-time streaming for blocks, logs, gas prices, and more
-- **Custom Hyperliquid subscriptions**: `gasPrice` and `blockReceipts` (unique to this proxy)
-- **Prometheus metrics**: Monitor all proxy activity
+- **Custom Hyperliquid subscriptions**: `gasPrice`, `blockReceipts`, `syncing`
+- **Prometheus metrics**: Monitor all activity
 - **High performance**: Written in Go with minimal overhead
 
 ## Quick Start
@@ -25,7 +25,18 @@ make build
 RPC_URL=http://your-node:3001/evm ./hlnode-websocket
 ```
 
-## Endpoints
+## Configuration
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `RPC_URL` | - | Upstream RPC URL (required) |
+| `WS_PORT` | `8080` | Server port |
+| `POLL_INTERVAL` | `100ms` | Block polling interval |
+| `SYNC_THRESHOLD` | `15s` | Max block age before node is considered out of sync |
+
+### Endpoints
 
 | Endpoint | Description |
 |----------|-------------|
@@ -34,6 +45,18 @@ RPC_URL=http://your-node:3001/evm ./hlnode-websocket
 | `GET /health` | Health check |
 | `GET /connections` | List active clients |
 | `GET /stats` | Server statistics |
+
+### Prometheus Metrics
+
+| Metric | Description |
+|--------|-------------|
+| `hlnode_websocket_ws_active_connections` | Active WebSocket connections |
+| `hlnode_websocket_ws_active_subscriptions{type}` | Active subscriptions by type |
+| `hlnode_websocket_ws_block_notifications_total` | Block notifications sent |
+| `hlnode_websocket_ws_log_notifications_total` | Log notifications sent |
+| `hlnode_websocket_ws_gas_price_notifications_total` | Gas price notifications sent |
+| `hlnode_websocket_ws_block_receipts_notifications_total` | Block receipts notifications sent |
+| `hlnode_websocket_blocks_processed_total` | Blocks processed |
 
 ## WebSocket Subscriptions
 
@@ -49,7 +72,33 @@ Connect via WebSocket: `ws://localhost:8080`
 | `blockReceipts` | All transaction receipts per block | ✅ Hyperliquid |
 | `syncing` | Smart sync detection (block age based) | ✅ Hyperliquid |
 
+## Development
+
+```bash
+make build      # Build binary
+make test       # Run tests
+make docker     # Build Docker image locally
+make run        # Build and run locally
+```
+
+## CI/CD
+
+### Release to Docker Hub
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+**Docker Hub:** https://hub.docker.com/r/imperatorco/hlnode-websocket
+
+## License
+
+MIT
+
 ---
+
+## Examples
 
 ### `newHeads` - Subscribe to new blocks
 
@@ -315,50 +364,3 @@ Receive all transaction receipts for each new block.
 ```json
 {"jsonrpc":"2.0","id":9,"result":true}
 ```
-
----
-
-## Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `RPC_URL` | - | Upstream RPC URL (required) |
-| `PROXY_PORT` | `8080` | Server port |
-| `POLL_INTERVAL` | `100ms` | Block polling interval |
-| `SYNC_THRESHOLD` | `15s` | Max block age before node is considered out of sync |
-
-## Development
-
-```bash
-make build      # Build binary
-make test       # Run tests
-make docker     # Build Docker image locally
-make run        # Build and run locally
-```
-
-## CI/CD
-
-### Release to Docker Hub
-
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-**Docker Hub:** https://hub.docker.com/r/imperatorco/hlnode-websocket
-
-## Prometheus Metrics
-
-| Metric | Description |
-|--------|-------------|
-| `hlnode_websocket_ws_active_connections` | Active WebSocket connections |
-| `hlnode_websocket_ws_active_subscriptions{type}` | Active subscriptions by type |
-| `hlnode_websocket_ws_block_notifications_total` | Block notifications sent |
-| `hlnode_websocket_ws_log_notifications_total` | Log notifications sent |
-| `hlnode_websocket_ws_gas_price_notifications_total` | Gas price notifications sent |
-| `hlnode_websocket_ws_block_receipts_notifications_total` | Block receipts notifications sent |
-| `hlnode_websocket_blocks_processed_total` | Blocks processed |
-
-## License
-
-MIT
