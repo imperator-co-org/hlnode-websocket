@@ -325,3 +325,387 @@ func TestWebSocketBatchRequest(t *testing.T) {
 
 	t.Logf("Batch responses: %d", len(responses))
 }
+
+// TestWebSocketSubscribeLogs tests logs subscription with address filter
+func TestWebSocketSubscribeLogs(t *testing.T) {
+	skipIfNoWSCompare(t)
+
+	conn := connectWS(t, wsLocal)
+	defer conn.Close()
+
+	// Subscribe to logs with single address filter
+	request := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"method":  "eth_subscribe",
+		"params": []interface{}{
+			"logs",
+			map[string]interface{}{
+				"address": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+			},
+		},
+		"id": 1,
+	}
+
+	resp := sendAndReceive(t, conn, request)
+
+	if resp.Error != nil {
+		t.Errorf("Unexpected error: %s", resp.Error.Message)
+		return
+	}
+
+	var subID string
+	json.Unmarshal(resp.Result, &subID)
+
+	if !strings.HasPrefix(subID, "0x") {
+		t.Errorf("Subscription ID should be hex format, got: %s", subID)
+	}
+
+	t.Logf("Logs subscription ID: %s", subID)
+
+	// Unsubscribe
+	unsubRequest := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"method":  "eth_unsubscribe",
+		"params":  []string{subID},
+		"id":      2,
+	}
+	unsubResp := sendAndReceive(t, conn, unsubRequest)
+
+	var success bool
+	json.Unmarshal(unsubResp.Result, &success)
+	if !success {
+		t.Error("Expected unsubscribe to return true")
+	}
+}
+
+// TestWebSocketSubscribeLogsMultipleAddresses tests logs subscription with multiple address filter
+func TestWebSocketSubscribeLogsMultipleAddresses(t *testing.T) {
+	skipIfNoWSCompare(t)
+
+	conn := connectWS(t, wsLocal)
+	defer conn.Close()
+
+	// Subscribe to logs with multiple addresses (as per README example)
+	request := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"method":  "eth_subscribe",
+		"params": []interface{}{
+			"logs",
+			map[string]interface{}{
+				"address": []string{
+					"0xf24090f1895cee4033103e670cc58edc28294841",
+					"0xdAC17F958D2ee523a2206206994597C13D831ec7",
+				},
+			},
+		},
+		"id": 1,
+	}
+
+	resp := sendAndReceive(t, conn, request)
+
+	if resp.Error != nil {
+		t.Errorf("Unexpected error: %s", resp.Error.Message)
+		return
+	}
+
+	var subID string
+	json.Unmarshal(resp.Result, &subID)
+
+	if !strings.HasPrefix(subID, "0x") {
+		t.Errorf("Subscription ID should be hex format, got: %s", subID)
+	}
+
+	t.Logf("Multiple addresses logs subscription ID: %s", subID)
+}
+
+// TestWebSocketSubscribeLogsWithTopics tests logs subscription with topic filter
+func TestWebSocketSubscribeLogsWithTopics(t *testing.T) {
+	skipIfNoWSCompare(t)
+
+	conn := connectWS(t, wsLocal)
+	defer conn.Close()
+
+	// Subscribe to logs with topic filter (Transfer events as per README)
+	transferTopic := "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+	request := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"method":  "eth_subscribe",
+		"params": []interface{}{
+			"logs",
+			map[string]interface{}{
+				"address": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+				"topics":  []string{transferTopic},
+			},
+		},
+		"id": 1,
+	}
+
+	resp := sendAndReceive(t, conn, request)
+
+	if resp.Error != nil {
+		t.Errorf("Unexpected error: %s", resp.Error.Message)
+		return
+	}
+
+	var subID string
+	json.Unmarshal(resp.Result, &subID)
+
+	if !strings.HasPrefix(subID, "0x") {
+		t.Errorf("Subscription ID should be hex format, got: %s", subID)
+	}
+
+	t.Logf("Logs with topics subscription ID: %s", subID)
+}
+
+// TestWebSocketSubscribeGasPrice tests gasPrice subscription (Hyperliquid custom)
+func TestWebSocketSubscribeGasPrice(t *testing.T) {
+	skipIfNoWSCompare(t)
+
+	conn := connectWS(t, wsLocal)
+	defer conn.Close()
+
+	request := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"method":  "eth_subscribe",
+		"params":  []string{"gasPrice"},
+		"id":      1,
+	}
+
+	resp := sendAndReceive(t, conn, request)
+
+	if resp.Error != nil {
+		t.Errorf("Unexpected error: %s", resp.Error.Message)
+		return
+	}
+
+	var subID string
+	json.Unmarshal(resp.Result, &subID)
+
+	if !strings.HasPrefix(subID, "0x") {
+		t.Errorf("Subscription ID should be hex format, got: %s", subID)
+	}
+
+	t.Logf("gasPrice subscription ID: %s", subID)
+
+	// Wait for a notification (gas price updates periodically)
+	t.Log("Waiting for gasPrice notification...")
+	conn.SetReadDeadline(time.Now().Add(15 * time.Second))
+	_, message, err := conn.ReadMessage()
+	if err != nil {
+		t.Logf("No notification received within timeout (this may be expected): %v", err)
+		return
+	}
+
+	var notification SubscriptionResponse
+	if err := json.Unmarshal(message, &notification); err != nil {
+		t.Fatalf("Failed to parse notification: %v", err)
+	}
+
+	if notification.Method != "eth_subscription" {
+		t.Errorf("Expected method eth_subscription, got: %s", notification.Method)
+	}
+
+	// Parse gas price info
+	var gasPriceInfo map[string]interface{}
+	json.Unmarshal(notification.Params.Result, &gasPriceInfo)
+
+	if _, ok := gasPriceInfo["gasPrice"]; !ok {
+		t.Error("gasPrice notification missing 'gasPrice' field")
+	}
+
+	t.Logf("Received gasPrice notification: %v", gasPriceInfo["gasPrice"])
+}
+
+// TestWebSocketSubscribeBlockReceipts tests blockReceipts subscription (Hyperliquid custom)
+func TestWebSocketSubscribeBlockReceipts(t *testing.T) {
+	skipIfNoWSCompare(t)
+
+	conn := connectWS(t, wsLocal)
+	defer conn.Close()
+
+	request := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"method":  "eth_subscribe",
+		"params":  []string{"blockReceipts"},
+		"id":      1,
+	}
+
+	resp := sendAndReceive(t, conn, request)
+
+	if resp.Error != nil {
+		t.Errorf("Unexpected error: %s", resp.Error.Message)
+		return
+	}
+
+	var subID string
+	json.Unmarshal(resp.Result, &subID)
+
+	if !strings.HasPrefix(subID, "0x") {
+		t.Errorf("Subscription ID should be hex format, got: %s", subID)
+	}
+
+	t.Logf("blockReceipts subscription ID: %s", subID)
+
+	// Wait for a notification
+	t.Log("Waiting for blockReceipts notification...")
+	conn.SetReadDeadline(time.Now().Add(30 * time.Second))
+	_, message, err := conn.ReadMessage()
+	if err != nil {
+		t.Logf("No notification received within timeout (this may be expected): %v", err)
+		return
+	}
+
+	var notification SubscriptionResponse
+	if err := json.Unmarshal(message, &notification); err != nil {
+		t.Fatalf("Failed to parse notification: %v", err)
+	}
+
+	if notification.Method != "eth_subscription" {
+		t.Errorf("Expected method eth_subscription, got: %s", notification.Method)
+	}
+
+	// Parse block receipts
+	var receiptsInfo map[string]interface{}
+	json.Unmarshal(notification.Params.Result, &receiptsInfo)
+
+	requiredFields := []string{"blockNumber", "blockHash", "receipts"}
+	for _, field := range requiredFields {
+		if _, ok := receiptsInfo[field]; !ok {
+			t.Errorf("blockReceipts notification missing '%s' field", field)
+		}
+	}
+
+	t.Logf("Received blockReceipts notification for block: %v", receiptsInfo["blockNumber"])
+}
+
+// TestWebSocketSubscribeSyncing tests syncing subscription (Hyperliquid custom)
+func TestWebSocketSubscribeSyncing(t *testing.T) {
+	skipIfNoWSCompare(t)
+
+	conn := connectWS(t, wsLocal)
+	defer conn.Close()
+
+	request := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"method":  "eth_subscribe",
+		"params":  []string{"syncing"},
+		"id":      1,
+	}
+
+	resp := sendAndReceive(t, conn, request)
+
+	if resp.Error != nil {
+		t.Errorf("Unexpected error: %s", resp.Error.Message)
+		return
+	}
+
+	var subID string
+	json.Unmarshal(resp.Result, &subID)
+
+	if !strings.HasPrefix(subID, "0x") {
+		t.Errorf("Subscription ID should be hex format, got: %s", subID)
+	}
+
+	t.Logf("syncing subscription ID: %s", subID)
+
+	// Wait for a notification (syncing checks periodically)
+	t.Log("Waiting for syncing notification...")
+	conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+	_, message, err := conn.ReadMessage()
+	if err != nil {
+		t.Logf("No notification received within timeout (this may be expected): %v", err)
+		return
+	}
+
+	var notification SubscriptionResponse
+	if err := json.Unmarshal(message, &notification); err != nil {
+		t.Fatalf("Failed to parse notification: %v", err)
+	}
+
+	if notification.Method != "eth_subscription" {
+		t.Errorf("Expected method eth_subscription, got: %s", notification.Method)
+	}
+
+	// Syncing can return true/false or an object with syncing status
+	t.Logf("Received syncing notification: %s", string(notification.Params.Result))
+}
+
+// TestWebSocketUnsubscribe tests eth_unsubscribe
+func TestWebSocketUnsubscribe(t *testing.T) {
+	skipIfNoWSCompare(t)
+
+	conn := connectWS(t, wsLocal)
+	defer conn.Close()
+
+	// First subscribe to newHeads
+	subRequest := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"method":  "eth_subscribe",
+		"params":  []string{"newHeads"},
+		"id":      1,
+	}
+	subResp := sendAndReceive(t, conn, subRequest)
+
+	var subID string
+	json.Unmarshal(subResp.Result, &subID)
+
+	t.Logf("Subscribed with ID: %s", subID)
+
+	// Now unsubscribe
+	unsubRequest := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"method":  "eth_unsubscribe",
+		"params":  []string{subID},
+		"id":      2,
+	}
+	unsubResp := sendAndReceive(t, conn, unsubRequest)
+
+	if unsubResp.Error != nil {
+		t.Errorf("Unexpected error: %s", unsubResp.Error.Message)
+		return
+	}
+
+	var success bool
+	json.Unmarshal(unsubResp.Result, &success)
+
+	if !success {
+		t.Error("Expected unsubscribe to return true")
+	}
+
+	t.Log("Unsubscribe successful")
+
+	// Try to unsubscribe again (should return false)
+	unsubResp2 := sendAndReceive(t, conn, unsubRequest)
+	var success2 bool
+	json.Unmarshal(unsubResp2.Result, &success2)
+
+	if success2 {
+		t.Error("Expected second unsubscribe to return false")
+	}
+
+	t.Log("Second unsubscribe correctly returned false")
+}
+
+// TestWebSocketInvalidSubscription tests error for invalid subscription type
+func TestWebSocketInvalidSubscription(t *testing.T) {
+	skipIfNoWSCompare(t)
+
+	conn := connectWS(t, wsLocal)
+	defer conn.Close()
+
+	request := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"method":  "eth_subscribe",
+		"params":  []string{"invalidType"},
+		"id":      1,
+	}
+
+	resp := sendAndReceive(t, conn, request)
+
+	if resp.Error == nil {
+		t.Error("Expected error for invalid subscription type")
+		return
+	}
+
+	t.Logf("Got expected error: %s", resp.Error.Message)
+}
