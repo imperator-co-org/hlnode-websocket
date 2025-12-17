@@ -106,6 +106,7 @@ func main() {
 	}
 
 	go pollBlocks(rpcClient, bc, cfg)
+	go pollSyncing(rpcClient, bc, cfg)
 
 	go func() {
 		logger.Info("Endpoints: / (WebSocket), /metrics, /health, /connections, /stats")
@@ -210,30 +211,75 @@ func pollBlocks(client *rpc.Client, bc *broadcaster.Broadcaster, cfg *config.Con
 				}
 			}
 
-			// Broadcast syncing status if there are subscribers (smart detection based on block age)
-			if len(subMgr.GetSubscriptionsByType(subscription.SubTypeSyncing)) > 0 {
-				// Parse block timestamp (hex string to int64)
-				var blockTimestamp int64
-				fmt.Sscanf(fullBlock.Timestamp, "0x%x", &blockTimestamp)
-				blockTime := time.Unix(blockTimestamp, 0)
-				blockAge := time.Since(blockTime)
-
-				// Node is syncing if block is older than threshold
-				isSyncing := blockAge > cfg.SyncThreshold
-
-				syncStatus := &rpc.SyncStatus{
-					Syncing:      isSyncing,
-					CurrentBlock: fullBlock.Number,
-				}
-
-				if isSyncing {
-					logger.Warn("Node out of sync: block %s is %.1fs old (threshold: %v)", fullBlock.Number, blockAge.Seconds(), cfg.SyncThreshold)
-				}
-
-				bc.BroadcastSyncing(syncStatus)
-			}
-
 			lastBlockNum = blockNum
 		}
+	}
+}
+
+// pollSyncing checks sync status every 1 second with a 2s timeout
+func pollSyncing(client *rpc.Client, bc *broadcaster.Broadcaster, cfg *config.Config) {
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
+	const queryTimeout = 2 * time.Second
+
+	for range ticker.C {
+		subMgr := bc.SubscriptionManager()
+		if len(subMgr.GetSubscriptionsByType(subscription.SubTypeSyncing)) == 0 {
+			continue
+		}
+
+		// Create context with 2s timeout
+		ctx, cancel := context.WithTimeout(context.Background(), queryTimeout)
+
+		// Try to get the latest block with timeout
+		blockNum, err := client.GetBlockNumber(ctx)
+		if err != nil {
+			cancel()
+			// Query failed or timeout - consider node out of sync
+			logger.Warn("Sync check failed (timeout or error): %v", err)
+			syncStatus := &rpc.SyncStatus{Syncing: true}
+			bc.BroadcastSyncing(syncStatus)
+			continue
+		}
+
+		fullBlock, err := client.GetFullBlock(ctx, blockNum)
+		cancel()
+
+		if err != nil || fullBlock == nil {
+			// Cannot get block - consider node out of sync
+			logger.Warn("Sync check failed (cannot get block): %v", err)
+			syncStatus := &rpc.SyncStatus{Syncing: true}
+			bc.BroadcastSyncing(syncStatus)
+			continue
+		}
+
+		// Parse block timestamp (hex string to int64)
+		var blockTimestamp int64
+		_, parseErr := fmt.Sscanf(fullBlock.Timestamp, "0x%x", &blockTimestamp)
+		if parseErr != nil || blockTimestamp == 0 {
+			// Cannot parse timestamp - consider node out of sync
+			logger.Warn("Sync check failed (cannot parse timestamp): %v", parseErr)
+			syncStatus := &rpc.SyncStatus{Syncing: true}
+			bc.BroadcastSyncing(syncStatus)
+			continue
+		}
+
+		blockTime := time.Unix(blockTimestamp, 0)
+		blockAge := time.Since(blockTime)
+
+		// Node is out of sync if block is older than threshold
+		isSyncing := blockAge > cfg.SyncThreshold
+
+		syncStatus := &rpc.SyncStatus{
+			Syncing:      isSyncing,
+			CurrentBlock: fullBlock.Number,
+		}
+
+		if isSyncing {
+			logger.Warn("Node out of sync: block %s is %.1fs old (threshold: %v)", fullBlock.Number, blockAge.Seconds(), cfg.SyncThreshold)
+		}
+
+		bc.BroadcastSyncing(syncStatus)
 	}
 }

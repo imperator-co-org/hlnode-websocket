@@ -258,7 +258,10 @@ Receive all transaction receipts for each new block.
 
 ### `syncing` - Subscribe to sync status (Custom)
 
-**Smart sync detection**: Returns `false` if node is in sync, `true` if block is older than `SYNC_THRESHOLD` (default: 15s).
+**Smart sync detection**: Checks every 1 second if block is older than `SYNC_THRESHOLD` (default: 15s). Returns `true` (out of sync) if:
+- Block timestamp is older than threshold
+- Query times out (2s timeout)
+- Cannot fetch or parse block data
 
 **Request:**
 ```json
