@@ -90,7 +90,7 @@ Run integration tests to compare your local WebSocket against a reference node:
 make test-integration WS_COMPARE=ws://your-reference-node:8545
 ```
 
-> **Note:** `WS_COMPARE` must point to a Hyperliquid node running **nanoreth** (the native Hyperliquid EVM execution client).
+> **Note:** `WS_COMPARE` must point to a Hyperliquid node running **nanoreth** (the custom reth Hyperliquid EVM : https://github.com/hl-archive-node/nanoreth)
 
 ## CI/CD
 
@@ -102,10 +102,6 @@ git push origin v1.0.0
 ```
 
 **Docker Hub:** https://hub.docker.com/r/imperatorco/hlnode-websocket
-
-## License
-
-MIT
 
 ---
 
@@ -375,3 +371,11 @@ Receive all transaction receipts for each new block.
 ```json
 {"jsonrpc":"2.0","id":9,"result":true}
 ```
+
+## License
+
+This project is licensed under **CC BY-NC 4.0** (Creative Commons Attribution-NonCommercial 4.0).
+
+You are free to use, share, and adapt this software for **non-commercial purposes** only.
+
+See [LICENSE](LICENSE) for details.
